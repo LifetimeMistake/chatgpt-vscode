@@ -5,25 +5,25 @@ export class FunctionRegistry {
         this.functions = new Map<string, FunctionInfo>();
     }
 
-    public registerFunction(func: (args: object) => string, parameters: PropertyInfo[], description?: string) {
-        if (this.functions.has(func.name)) {
-            throw new Error(`Function ${func.name} is already registered!`);
+    public registerFunction(func: (args: object) => string, name: string, parameters: PropertyInfo[], description?: string) {
+        if (this.functions.has(name)) {
+            throw new Error(`Function ${name} is already registered!`);
         }
 
-        var functionInfo = new FunctionInfo(func, parameters, description);
-        this.functions.set(func.name, functionInfo);
+        var functionInfo = new FunctionInfo(func, name, parameters, description);
+        this.functions.set(name, functionInfo);
     }
 
     public getFunctions(): FunctionInfo[] {
         return Array.from(this.functions.values());
     }
 
-    public getFunctionByName(name: string): FunctionInfo | null {
-        if (this.functions.has(name)) {
-            return this.functions.get(name);
-        }
+    public hasFunctions(): boolean {
+        return this.functions.size !== 0;
+    }
 
-        return null;
+    public getFunctionByName(name: string): FunctionInfo | undefined {
+        return this.functions.get(name);
     }
 
     public toObject(): object[] {
@@ -59,8 +59,8 @@ export class FunctionRegistry {
                 if (p.description) {
                     property["description"] = p.description;
                 }
-                if (p._enum) {
-                    property["enum"] = p._enum;
+                if (p.enum) {
+                    property["enum"] = p.enum;
                 }
             });
         });
@@ -86,9 +86,9 @@ export class FunctionInfo {
     public properties: PropertyInfo[];
     public description?: string;
 
-    constructor(func: (args: object) => string, parameters: PropertyInfo[], description?: string) {
+    constructor(func: (args: object) => string, name: string, parameters: PropertyInfo[], description?: string) {
         this.func = func;
-        this.name = func.name;
+        this.name = name;
         this.properties = parameters;
         this.description = description;
     }
@@ -99,14 +99,14 @@ export class PropertyInfo {
     public type: ParameterType;
     public required: boolean;
     public description?: string;
-    public _enum?: any[];
+    public enum?: any[];
 
     constructor(name: string, type: ParameterType, required: boolean, description?: string, _enum?: any[]) {
         this.name = name;
         this.type = type;
         this.required = required;
         this.description = description;
-        this._enum = _enum;
+        this.enum = _enum;
     }
 }
 
