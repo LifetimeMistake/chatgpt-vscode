@@ -1,21 +1,24 @@
 import { EventEmitter } from "events";
 import { AssistantMessage, FunctionMessage, Message, SystemMessage, UserMessage } from "./messages";
+const USER_REQUEST_EVENT = "userRequest";
 
 export class MessageHistory {
     private messages: Message[];
+    public maxMessages: number;
     public eventEmitter: EventEmitter;
-    public systemMessageFactory: SystemMessageFactory;
+    public systemMessage: SystemMessageFactory;
 
-    constructor() {
+    constructor(maxMessages: number, systemMessageFactory: SystemMessageFactory) {
         this.messages = [];
+        this.maxMessages = maxMessages;
         this.eventEmitter = new EventEmitter();
-        this.systemMessageFactory = new SystemMessageFactory();
+        this.systemMessage = systemMessageFactory;
     }
 
     public pushUserMessage(content: string) {
         var message = new UserMessage(content);
         this.messages.push(message);
-        this.eventEmitter.emit('userMessageSent', message);
+        this.eventEmitter.emit(USER_REQUEST_EVENT, message);
     }
 
     public pushAssistantMessage(content: string) {
@@ -33,24 +36,23 @@ export class MessageHistory {
         this.messages.push(message);
     }
 
-    public onUserMessageSent(handler: (message: UserMessage) => void) {
-        this.eventEmitter.on('userMessageSent', handler);
+    public onUserRequest(handler: (message: UserMessage) => void) {
+        this.eventEmitter.on(USER_REQUEST_EVENT, handler);
     }
 
-    public offUserMessageSent(handler: (message: UserMessage) => void) {
-        this.eventEmitter.off('userMessageSent', handler);
+    public offUserRequest(handler: (message: UserMessage) => void) {
+        this.eventEmitter.off(USER_REQUEST_EVENT, handler);
     }
 
     public toObject(): object[] {
         var messageArray: object[] = [];
 
-        var systemMessage = this.systemMessageFactory.produceMessage();
+        var systemMessage = this.systemMessage.produceMessage();
         messageArray.push(systemMessage.toObject());
 
-        this.messages.forEach(m => {
-            var messageObject = m.toObject();
-            messageArray.push(messageObject);
-        });
+        for (const message of this.messages.slice(-this.maxMessages)) {
+            messageArray.push(message.toObject());
+        }
 
         return messageArray;
     }
@@ -60,12 +62,12 @@ export class SystemMessageFactory {
     private mixins: Map<string, string>;
     public prompt: string;
 
-    public isGPT4: boolean;
+    public useSystemRole: boolean;
 
-    constructor() {
-        this.prompt = "";
+    constructor(useSystemRole: boolean, systemPrompt?: string) {
+        this.prompt = systemPrompt ?? "";
         this.mixins = new Map<string, string>();
-        this.isGPT4 = false;
+        this.useSystemRole = useSystemRole;
     }
 
     public addMixin(key: string, content: string) {
@@ -84,7 +86,7 @@ export class SystemMessageFactory {
         var content = `${this.prompt} ${this.mixins}`;
 
         var message: SystemMessage | UserMessage;
-        if (this.isGPT4) {
+        if (this.useSystemRole) {
             message = new SystemMessage(content);
         } else {
             message = new UserMessage(content);
