@@ -1,13 +1,13 @@
 {
-  "name": "autonimate",
-  "publisher": "autonimate",
-  "displayName": "Autonimate: DevGPT",
+  "name": "chatgpt-vscode",
+  "publisher": "lifetimemistake",
+  "displayName": "GPT VSCode",
   "icon": "images/ai-logo.png",
-  "description": "An autonomous development plugin, Autonimate AI Copilot, powered by OpenAI.",
-  "version": "2.1.5",
+  "description": "An autonomous development plugin, GPT AI Copilot, powered by OpenAI.",
+  "version": "1.0.0",
   "aiKey": "",
   "repository": {
-    "url": "https://github.com/Cytranics/vscode-autonimate"
+    "url": "https://github.com/LifetimeMistake/chatgpt-vscode"
   },
   "engines": {
     "vscode": "^1.73.0"
@@ -44,122 +44,92 @@
     "menus": {
       "editor/context": [
         {
-          "command": "autonimate.refactorCode",
-          "group": "autonimate@2",
+          "command": "chatgpt-vscode.refactorCode",
+          "group": "chatgpt-vscode@2",
           "when": "editorHasSelection && refactorCode-enabled"
         },
         {
-          "command": "autonimate.auto.refactorCodeAuto",
-          "group": "autonimate@3",
-          "when": "editorHasSelection && refactorCode-enabled"
-        },
-        {
-          "command": "autonimate.findProblems",
-          "group": "autonimate@4",
+          "command": "chatgpt-vscode.findProblems",
+          "group": "chatgpt-vscode@4",
           "when": "editorHasSelection && findProblems-enabled"
         },
         {
-          "command": "autonimate.optimize",
-          "group": "autonimate@5",
+          "command": "chatgpt-vscode.optimize",
+          "group": "chatgpt-vscode@5",
           "when": "editorHasSelection && optimize-enabled"
         },
         {
-          "command": "autonimate.explain",
-          "group": "autonimate@6",
+          "command": "chatgpt-vscode.explain",
+          "group": "chatgpt-vscode@6",
           "when": "editorHasSelection && explain-enabled"
         },
         {
-          "command": "autonimate.addComments",
-          "group": "autonimate@7",
+          "command": "chatgpt-vscode.addComments",
+          "group": "chatgpt-vscode@7",
           "when": "editorHasSelection && addComments-enabled"
         },
         {
-          "command": "autonimate.completeCode",
-          "group": "autonimate@8",
+          "command": "chatgpt-vscode.completeCode",
+          "group": "chatgpt-vscode@8",
           "when": "editorHasSelection && completeCode-enabled"
         },
         {
-          "command": "autonimate.adhoc",
-          "group": "autonimate@9",
-          "when": "editorHasSelection && adhoc-enabled"
-        },
-        {
-          "command": "autonimate.customPrompt1",
-          "group": "autonimate@10",
-          "when": "editorHasSelection && customPrompt1-enabled"
-        },
-        {
-          "command": "autonimate.customPrompt2",
-          "group": "autonimate@11",
-          "when": "editorHasSelection && customPrompt2-enabled"
+          "command": "chatgpt-vscode.customPrompt",
+          "group": "chatgpt-vscode@9",
+          "when": "editorHasSelection && customPrompt-enabled"
         }
       ]
     },
     "commands": [
       {
-        "command": "autonimate.refactorCode",
+        "command": "chatgpt-vscode.refactorCode",
         "title": "Refactor Code",
         "enablement": "editorHasSelection"
       },
       {
-        "command": "autonimate.auto.refactorCodeAuto",
-        "title": "Autonimate: Auto Refactor",
+        "command": "chatgpt-vscode.findProblems",
+        "title": "GPT: Debug Code",
         "enablement": "editorHasSelection"
       },
       {
-        "command": "autonimate.findProblems",
-        "title": "Autonimate: Debug Code",
+        "command": "chatgpt-vscode.optimize",
+        "title": "GPT: Optimize Code",
         "enablement": "editorHasSelection"
       },
       {
-        "command": "autonimate.optimize",
-        "title": "Autonimate: Optimize Code",
+        "command": "chatgpt-vscode.explain",
+        "title": "GPT: Explain Code",
         "enablement": "editorHasSelection"
       },
       {
-        "command": "autonimate.explain",
-        "title": "Autonimate: Explain Code",
+        "command": "chatgpt-vscode.addComments",
+        "title": "GPT: Add Comments",
         "enablement": "editorHasSelection"
       },
       {
-        "command": "autonimate.addComments",
-        "title": "Autonimate: Add Comments",
+        "command": "chatgpt-vscode.completeCode",
+        "title": "GPT: Complete Code",
         "enablement": "editorHasSelection"
       },
       {
-        "command": "autonimate.completeCode",
-        "title": "Autonimate: Complete Code",
+        "command": "chatgpt-vscode.customPrompt",
+        "title": "GPT: Custom prompt",
         "enablement": "editorHasSelection"
       },
       {
-        "command": "autonimate.adhoc",
-        "title": "Autonimate: Ad-hoc prompt",
-        "enablement": "editorHasSelection"
+        "command": "chatgpt-vscode.clearConversation",
+        "title": "GPT: Clear conversation"
       },
       {
-        "command": "autonimate.customPrompt1",
-        "title": "Autonimate: Custom prompt 1",
-        "enablement": "editorHasSelection"
-      },
-      {
-        "command": "autonimate.customPrompt2",
-        "title": "Autonimate: Custom prompt 2",
-        "enablement": "editorHasSelection"
-      },
-      {
-        "command": "autonimate.clearConversation",
-        "title": "Autonimate: Clear conversation"
-      },
-      {
-        "command": "autonimate.exportConversation",
-        "title": "Autonimate: Export conversation"
+        "command": "chatgpt-vscode.exportConversation",
+        "title": "GPT: Export conversation"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
           "id": "vscode-chatgpt-view-container",
-          "title": "Autonimate",
+          "title": "GPT",
           "icon": "images/ai-logo-in.png"
         }
       ]
@@ -168,15 +138,20 @@
       "vscode-chatgpt-view-container": [
         {
           "type": "webview",
-          "id": "autonimate.view",
+          "id": "chatgpt-vscode.view",
           "name": "Conversation window"
         }
       ]
     },
     "configuration": {
-      "title": "Autonimate",
+      "title": "GPT",
       "properties": {
-        "autonimate.method": {
+        "chatgpt-vscode.assistantName": {
+          "type": "string",
+          "default": "GPT",
+          "markdownDescription": "Custom name of the assistant"
+        },
+        "chatgpt-vscode.method": {
           "type": "string",
           "enum": [
             "OpenAI",
@@ -188,24 +163,24 @@
             "Choose your API provider. OpenAI and Azure Supported. "
           ]
         },
-        "autonimate.apiKey": {
+        "chatgpt-vscode.apiKey": {
           "type": "string",
           "markdownDescription": "Azure or OpenAI API Key"
         },
-        "autonimate.apiBaseUrl": {
+        "chatgpt-vscode.apiBaseUrl": {
           "type": "string",
           "default": "https://api.openai.com/v1",
           "markdownDescription": "OpenAI Base URL."
         },
-        "autonimate.azureBaseURL": {
+        "chatgpt-vscode.azureBaseURL": {
           "type": "string",
           "markdownDescription": "`Azure:` Base URL. Example: https://name.openai.azure.com/"
         },
-        "autonimate.azureDeployment": {
+        "chatgpt-vscode.azureDeployment": {
           "type": "string",
           "markdownDescription": "`Azure:` Please provide the name you assigned to your Azure model deployment. This refers to the name you created when you deployed the model, not the model itself. For example, it could be GPT-4-Deployment"
         },
-        "autonimate.model": {
+        "chatgpt-vscode.model": {
           "type": "string",
           "enum": [
             "gpt-4",
@@ -240,126 +215,101 @@
             "16k Snapshot of `gpt-3.5-turbo-16k` from June 13th 2023. Unlike `gpt-3.5-turbo-16k`, this model will not receive updates, and will be deprecated 3 months after a new version is released."
           ]
         },
-        "autonimate.maxTokens": {
+        "chatgpt-vscode.maxTokens": {
           "type": "number",
           "markdownDescription": "Optional: Sets the max number of tokens (characters or words) for the model's output. The total tokens, including the input and output, must not exceed the model's maximum context length (e.g., 4096 for `gpt-3.5-turbo` and 8192 for `gpt-4`). Default is 0 which means it will caclulate on its own."
         },
-        "autonimate.promptPrefix.refactorCode": {
+        "chatgpt-vscode.promptPrefix.refactorCode": {
           "type": "string",
           "default": "Refactor this code to enhance its simplicity and improve readability.",
           "description": "Refactor code prompt."
         },
-        "autonimate.promptPrefix.refactorCode-enabled": {
+        "chatgpt-vscode.promptPrefix.refactorCode-enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable the refactor code context menu"
         },
-        "autonimate.promptPrefix.findProblems": {
+        "chatgpt-vscode.promptPrefix.findProblems": {
           "type": "string",
           "default": "Identify any current or potential future issues in this code, regardless of whether they are immediately apparent.",
           "description": "Find problems prompt."
         },
-        "autonimate.promptPrefix.findProblems-enabled": {
+        "chatgpt-vscode.promptPrefix.findProblems-enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable the find problems context menu"
         },
-        "autonimate.promptPrefix.optimize": {
+        "chatgpt-vscode.promptPrefix.optimize": {
           "type": "string",
           "default": "Optimize this code using latest techniques: ",
           "description": "Optimize code prompt."
         },
-        "autonimate.promptPrefix.optimize-enabled": {
+        "chatgpt-vscode.promptPrefix.optimize-enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable optimization context menu"
         },
-        "autonimate.promptPrefix.explain": {
+        "chatgpt-vscode.promptPrefix.explain": {
           "type": "string",
           "default": "Explain this code as if you were an expert university computer science professor.",
           "description": "Explain code prompt."
         },
-        "autonimate.promptPrefix.explain-enabled": {
+        "chatgpt-vscode.promptPrefix.explain-enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable explain code context menu"
         },
-        "autonimate.promptPrefix.addComments": {
+        "chatgpt-vscode.promptPrefix.addComments": {
           "type": "string",
           "default": "Add detailed comments to each block of logic within this code: ",
           "description": "Add comments prompt."
         },
-        "autonimate.promptPrefix.addComments-enabled": {
+        "chatgpt-vscode.promptPrefix.addComments-enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable add comments context menu"
         },
-        "autonimate.promptPrefix.completeCode": {
+        "chatgpt-vscode.promptPrefix.completeCode": {
           "type": "string",
           "default": "Please complete the following code: ",
           "description": "Complete code prompt."
         },
-        "autonimate.promptPrefix.completeCode-enabled": {
+        "chatgpt-vscode.promptPrefix.completeCode-enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable complete code context menu"
         },
-        "autonimate.promptPrefix.customPrompt1": {
-          "type": "string",
-          "default": "",
-          "description": "This is your customizable prompt. It is turned off by default. To use a custom prompt, please input it here and then enable this setting."
-        },
-        "autonimate.promptPrefix.customPrompt1-enabled": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "Enable Custom Prompt 1"
-        },
-        "autonimate.promptPrefix.customPrompt2": {
-          "type": "string",
-          "default": "",
-          "description": "This is your second customizable prompt. It is not activated by default. If you wish to use a custom prompt, enter it here and make sure to enable this setting."
-        },
-        "autonimate.promptPrefix.customPrompt2-enabled": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "Enable Custom Prompt 2"
-        },
-        "autonimate.promptPrefix.adhoc-enabled": {
+        "chatgpt-vscode.promptPrefix.customPrompt-enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable the prompt prefix used for adhoc command for the selected code in the context menu"
         },
-        "autonimate.temperature": {
+        "chatgpt-vscode.temperature": {
           "type": "number",
           "default": 0.2,
           "markdownDescription": "Sets the sampling 'temperature'. Higher values result in riskier outputs, making the model more creative. A value of 0.9 is suggested for creative applications, while 0 is for tasks with a well-defined answer. It's advisable to adjust either this or `top_p`, not both. More info in the [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-temperature)."
         },
-        "autonimate.top_p": {
+        "chatgpt-vscode.top_p": {
           "type": "number",
           "default": 0,
           "markdownDescription": "Defines 'nucleus sampling', an alternative to temperature sampling. The model will consider tokens within the top `top_p` probability mass. For instance, 0.1 would consider the top 10% probability tokens. It's advisable to adjust either this or `temperature`, not both."
         },
-        "autonimate.response.showNotification": {
+        "chatgpt-vscode.response.showNotification": {
           "type": "boolean",
           "default": false,
           "description": "Enables notifications when the ChatGPT bot responds to your input."
         },
-        "autonimate.response.autoScroll": {
+        "chatgpt-vscode.response.autoScroll": {
           "type": "boolean",
           "default": true,
           "description": "With this enabled, the extension will automatically scroll to the bottom when a new question or response is added. To change this, disable the setting."
         },
-        "autonimate.systemPrompt": {
+        "chatgpt-vscode.systemPrompt": {
           "type": "string",
-          "default": "You are Autonimate, developed by Autonimate LLC. Your task is to assist with software development in any programming language, adhering to the following guidelines:  Be mindful of the conversation history: Identify whether the current user query is a follow-up to previous code or a new instruction. If it’s a follow-up, ensure the new code integrates seamlessly with the existing one. Follow the best practices for the chosen language: Write clean, readable code that adheres to the standards and conventions of the language. Ensure code quality and correctness: The code should pass any relevant tests or checks to ensure it’s error-free and meets the requirements. Utilize the latest features and libraries of the language: This will make the code more efficient and maintainable. Incorporate robust error handling and logging: This will make the code more resilient and easier to debug. Leverage the advanced features and paradigms of the language: Use the most appropriate techniques and tools to write concise and elegant code. Aim for high-quality code: The code should not only accomplish the task at hand, but also be easy to understand and modify.",
-          "markdownDescription": "The system prompt is a pre-defined text that will be automatically included at the beginning of each API call."
+          "default": "You are {name}, a programming assistant. Your task is to assist with software development. Write clean code, be mindful of the conversation history, follow best practices and ensure code quality and corectness. Your code should accomplish the task given by the user but also be easy to understand and modify.",
+          "markdownDescription": "The system prompt defines the behavior of the language model."
         },
-        "autonimate.systemAppendPrompt": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "The 'system append prompt' is a predefined text automatically appended at the end of each API call, following your code. This feature assists in maintaining a continuous narrative or 'tree of thought' during the conversation, guiding the AI to provide more contextually relevant and coherent responses."
-        },
-        "autonimate.conversationHistoryAmount": {
+        "chatgpt-vscode.conversationHistoryAmount": {
           "type": "integer",
           "default": 6,
           "description": "The amount of conversations the model will keep in memory."
@@ -373,11 +323,13 @@
     "build": "npm run -S esbuild-base -- --sourcemap",
     "watch": "npm run -S esbuild-base -- --sourcemap --watch",
     "fmt": "prettier --write \"src/**/*.ts\"&& npm run test -- --fix",
-    "test": "eslint src --ext ts && tsc --noEmit"
+    "test": "eslint src --ext ts && tsc --noEmit",
+    "buildview": "sass --watch /webwiev/main.scss /webwiev/main.css"
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",
     "@types/isomorphic-fetch": "^0.0.36",
+    "@types/jquery": "^3.5.20",
     "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
     "@types/uuid": "^9.0.0",
@@ -394,6 +346,7 @@
     "typescript": "^4.9.3"
   },
   "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
     "delay": "^5.0.0",
     "events": "^3.3.0",
     "eventsource-parser": "^0.1.0",
@@ -410,6 +363,7 @@
     "puppeteer-extra-plugin-user-preferences": "^2.4.0",
     "quick-lru": "^6.1.1",
     "remark": "^14.0.2",
+    "sass": "^1.68.0",
     "strip-markdown": "^5.0.0",
     "uuid": "^9.0.0"
   },
