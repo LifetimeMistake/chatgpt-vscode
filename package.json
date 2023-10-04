@@ -45,37 +45,30 @@
       "editor/context": [
         {
           "command": "chatgpt-vscode.refactorCode",
-          "group": "chatgpt-vscode@2",
           "when": "editorHasSelection && refactorCode-enabled"
         },
         {
           "command": "chatgpt-vscode.findProblems",
-          "group": "chatgpt-vscode@4",
           "when": "editorHasSelection && findProblems-enabled"
         },
         {
           "command": "chatgpt-vscode.optimize",
-          "group": "chatgpt-vscode@5",
           "when": "editorHasSelection && optimize-enabled"
         },
         {
           "command": "chatgpt-vscode.explain",
-          "group": "chatgpt-vscode@6",
           "when": "editorHasSelection && explain-enabled"
         },
         {
           "command": "chatgpt-vscode.addComments",
-          "group": "chatgpt-vscode@7",
           "when": "editorHasSelection && addComments-enabled"
         },
         {
           "command": "chatgpt-vscode.completeCode",
-          "group": "chatgpt-vscode@8",
           "when": "editorHasSelection && completeCode-enabled"
         },
         {
           "command": "chatgpt-vscode.customPrompt",
-          "group": "chatgpt-vscode@9",
           "when": "editorHasSelection && customPrompt-enabled"
         }
       ]
@@ -139,7 +132,7 @@
         {
           "type": "webview",
           "id": "chatgpt-vscode.view",
-          "name": "Conversation window"
+          "name": "Chat window"
         }
       ]
     },

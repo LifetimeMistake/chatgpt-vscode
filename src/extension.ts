@@ -12,4 +12,12 @@ export async function activate(context: vscode.ExtensionContext) {
             },
         }
     );
+
+    function registerCommand(name: string, handler: () => void) {
+        context.subscriptions.push(vscode.commands.registerCommand(`chatgpt-vscode.${name}`, handler));
+    }
+
+    function sendMessage(type: string, data: string) {
+        provider.webviewView.webview.postMessage({ type: type, data: data });
+    }
 }

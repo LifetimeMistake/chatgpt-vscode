@@ -4,15 +4,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" data-license="isc-gnc">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        h1 {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.4.0.min.js"></script>
 </head>
 
-<body class="overflow-hidden flex flex-col h-screen">
-    <div class="bg-neutral-700 flex-grow"></div>
-    <div class="bg-neutral-900 bottom-0 h-20">
-        <textarea class="bg-neutral-900 placeholder:text-neutral-400 text-sm overflow-y-auto resize-none w-full"
-            placeholder="Ask something..."></textarea>
+<body class="h-screen flex flex-col">
+    <div id="main-panel" class="bg-neutral-800 flex-grow overflow-y-scroll">
+        <div id="introduction" class="">
+            <img class="w-64 mx-auto mt-10"
+                src="https://cuddlyoctopus.com/wp-content/uploads/2019/11/KI-032A-Astolfo-750x750.png">
+            <h1 class="text-3xl mx-auto mt-1 w-max font-bold text-white">GPT for VSCode</h1>
+            <p class="mx-auto w-max mt-3">Your coding assistant</p>
+            <div class="flex flex-col space-y-10 mt-10 mx-auto w-auto items-center">
+                <p class="p-2 px-3 border-4 border-neutral-500 rounded-md w-full text-center">Advanced Pegging Support
+                </p>
+                <p class="p-2 px-3 border-4 border-neutral-500 rounded-md w-full text-center">Trans and Femboy
+                    Compatibility
+                </p>
+                <p class="p-2 px-3 border-4 border-neutral-500 rounded-md w-full text-center">Suck, Squeeze, Bang and
+                    Blow
+                    Functionality</p>
+                <p class="p-2 px-3 border-4 border-neutral-500 rounded-md w-full text-center">I hate front-end so much
+                    help
+                    me
+                </p>
+            </div>
+        </div>
+        <div id="chat" class="hidden">
+        </div>
     </div>
+    <div class="bg-neutral-900 flex flex-row">
+        <textarea id="input-area"
+            class="bg-neutral-900 placeholder:text-neutral-400 text-sm overflow-y-auto resize-none p-3 flex-grow"
+            placeholder="Ask something..."></textarea>
+        <div class="flex px-3 justify-center relative">
+            <ul id="options-list" class="absolute bg-neutral-700 -top-16 -left-28 w-max shadow-xl hidden">
+                <li>
+                    <button id="newchat-button"
+                        class="hover:bg-neutral-600 p-2 w-full flex flex-row justify-between items-center">
+                        <span class="material-symbols-outlined mr-5 w-6">add_box
+                        </span>
+                        <span class="text-center align-middle">
+                            New chat
+                        </span>
+                    </button>
+                </li>
+                <li>
+                    <button id="settings-button"
+                        class="hover:bg-neutral-600 p-2 w-full flex flex-row justify-between items-center">
+                        <span class="material-symbols-outlined mr-5 w-6">
+                            settings
+                        </span>
+                        <span class="text-center align-middle">
+                            Open settings
+                        </span>
+                    </button>
+                </li>
+            </ul>
+            <button id="options-button" class="mx-auto my-auto group">
+                <span
+                    class="material-symbols-outlined p-1 rounded-md group-hover:bg-neutral-700 transition-all duration-300 ease-out">
+                    more_vert
+                </span></i>
+            </button>
+        </div>
+        <div class="flex px-3 justify-center">
+            <button id="send-button" class="mx-auto my-auto group">
+                <span
+                    class="material-symbols-outlined p-1 rounded-md group-hover:bg-neutral-700 transition-all duration-300 ease-out">
+                    send
+                </span></i>
+            </button>
+        </div>
+    </div>
+    <script id="mainJs" src=""></script>
 </body>
 
 </html>
