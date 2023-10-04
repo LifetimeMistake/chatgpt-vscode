@@ -1,15 +1,20 @@
+import { v4 as uuid } from 'uuid';
+
 export interface Message {
     readonly role: MessageRole;
+    readonly id: string;
     toObject(): object;
 }
 
 export class SystemMessage implements Message {
     readonly role: MessageRole;
+    readonly id: string;
     public content: string;
 
     constructor(content: string) {
         this.content = content;
         this.role = MessageRole.system;
+        this.id = uuid();
     }
 
     toObject(): object {
@@ -22,6 +27,7 @@ export class SystemMessage implements Message {
 
 export class UserMessage implements Message {
     readonly role: MessageRole;
+    readonly id: string;
     public systemMessages: string[];
     public content: string;
 
@@ -29,6 +35,7 @@ export class UserMessage implements Message {
         this.content = content;
         this.role = MessageRole.user;
         this.systemMessages = [];
+        this.id = uuid();
     }
 
     toObject(): object {
@@ -52,6 +59,7 @@ export class UserMessage implements Message {
 
 export class AssistantMessage implements Message {
     readonly role: MessageRole;
+    readonly id: string;
     public content?: string;
     public functionCall?: { name: string, args: string; };
 
@@ -59,6 +67,7 @@ export class AssistantMessage implements Message {
         this.role = MessageRole.assistant;
         this.content = content;
         this.functionCall = functionCall;
+        this.id = uuid();
     }
 
     public toObject(): object {
@@ -78,6 +87,7 @@ export class AssistantMessage implements Message {
 
 export class FunctionMessage implements Message {
     readonly role: MessageRole;
+    readonly id: string;
     public name: string;
     public content: string;
 
@@ -85,6 +95,7 @@ export class FunctionMessage implements Message {
         this.role = MessageRole.function;
         this.name = name;
         this.content = content;
+        this.id = uuid();
     }
 
     public toObject(): object {
