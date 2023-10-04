@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import { v4 as uuid } from 'uuid';
 import { AssistantMessage, FunctionMessage, Message, SystemMessage, UserMessage } from "./messages";
 const USER_REQUEST_EVENT = "userRequest";
 
@@ -15,25 +16,37 @@ export class MessageHistory {
         this.systemMessage = systemMessageFactory;
     }
 
-    public pushUserMessage(content: string) {
-        var message = new UserMessage(content);
+    public pushUserMessage(id: string, content: string): UserMessage {
+        var message = new UserMessage(id, content);
         this.messages.push(message);
         this.eventEmitter.emit(USER_REQUEST_EVENT, message);
+        return message;
     }
 
-    public pushAssistantMessage(content: string) {
-        var message = new AssistantMessage(content, null);
-        this.messages.push(message);
+    public editUserMessage(id: string, newContent: string) {
+        var messageIndex = this.messages.findIndex(m => m.id === id && m instanceof UserMessage);
+        if (messageIndex === -1) { throw new Error("Invalid message id!"); }
+        var message = this.messages[messageIndex] as UserMessage;
+        message.content = newContent;
+        this.messages.splice(messageIndex + 1);
     }
 
-    public pushAssistantCallMessage(functionName: string, args: string) {
-        var message = new AssistantMessage(null, { name: functionName, args: args });
+    public pushAssistantMessage(id: string, content: string): AssistantMessage {
+        var message = new AssistantMessage(id, content, null);
         this.messages.push(message);
+        return message;
     }
 
-    public pushFunctionMessage(name: string, content: string) {
-        var message = new FunctionMessage(name, content);
+    public pushAssistantCallMessage(id: string, functionName: string, args: string): AssistantMessage {
+        var message = new AssistantMessage(id, null, { name: functionName, args: args });
         this.messages.push(message);
+        return message;
+    }
+
+    public pushFunctionMessage(id: string, name: string, content: string): FunctionMessage {
+        var message = new FunctionMessage(id, name, content);
+        this.messages.push(message);
+        return message;
     }
 
     public onUserRequest(handler: (message: UserMessage) => void) {
@@ -87,9 +100,9 @@ export class SystemMessageFactory {
 
         var message: SystemMessage | UserMessage;
         if (this.useSystemRole) {
-            message = new SystemMessage(content);
+            message = new SystemMessage(uuid(), content);
         } else {
-            message = new UserMessage(content);
+            message = new UserMessage(uuid(), content);
         }
 
         return message;
