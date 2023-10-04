@@ -76,7 +76,7 @@
     "commands": [
       {
         "command": "chatgpt-vscode.refactorCode",
-        "title": "Refactor Code",
+        "title": "GPT: Refactor Code",
         "enablement": "editorHasSelection"
       },
       {
@@ -108,14 +108,6 @@
         "command": "chatgpt-vscode.customPrompt",
         "title": "GPT: Custom prompt",
         "enablement": "editorHasSelection"
-      },
-      {
-        "command": "chatgpt-vscode.clearConversation",
-        "title": "GPT: Clear conversation"
-      },
-      {
-        "command": "chatgpt-vscode.exportConversation",
-        "title": "GPT: Export conversation"
       }
     ],
     "viewsContainers": {
@@ -151,10 +143,7 @@
             "Azure"
           ],
           "default": "OpenAI",
-          "markdownDescription": "Choose your API Provider",
-          "markdownEnumDescriptions": [
-            "Choose your API provider. OpenAI and Azure Supported. "
-          ]
+          "markdownDescription": "API Provider"
         },
         "chatgpt-vscode.apiKey": {
           "type": "string",
@@ -163,15 +152,26 @@
         "chatgpt-vscode.apiBaseUrl": {
           "type": "string",
           "default": "https://api.openai.com/v1",
-          "markdownDescription": "OpenAI Base URL."
+          "markdownDescription": "(Optional) OpenAI Base URL."
         },
-        "chatgpt-vscode.azureBaseURL": {
+        "chatgpt-vscode.organizationName": {
           "type": "string",
-          "markdownDescription": "`Azure:` Base URL. Example: https://name.openai.azure.com/"
+          "markdownDescription": "(Optional) Your OpenAI organization name used to resolve billing"
         },
-        "chatgpt-vscode.azureDeployment": {
+        "chatgpt-vscode.azureDeploymentUrl": {
           "type": "string",
-          "markdownDescription": "`Azure:` Please provide the name you assigned to your Azure model deployment. This refers to the name you created when you deployed the model, not the model itself. For example, it could be GPT-4-Deployment"
+          "markdownDescription": "`Azure:` Your Azure model deployment URL."
+        },
+        "chatgpt-vscode.azureApiVersion": {
+          "type": "string",
+          "enum": [
+            "2022-12-01",
+            "2023-03-15-preview",
+            "2023-05-15",
+            "2023-06-01-preview"
+          ],
+          "default": "2022-12-01",
+          "markdownDescription": "(Optional) Azure OpenAI Service REST API version."
         },
         "chatgpt-vscode.model": {
           "type": "string",
@@ -186,7 +186,7 @@
             "gpt-3.5-turbo-16k-0613"
           ],
           "default": "gpt-4-0613",
-          "markdownDescription": "`OpenAI:`Model Choices when using OpenAI.",
+          "markdownDescription": "OpenAI language model",
           "enumItemLabels": [
             "GPT-4",
             "GPT-4 (June 13)",
@@ -208,74 +208,70 @@
             "16k Snapshot of `gpt-3.5-turbo-16k` from June 13th 2023. Unlike `gpt-3.5-turbo-16k`, this model will not receive updates, and will be deprecated 3 months after a new version is released."
           ]
         },
-        "chatgpt-vscode.maxTokens": {
-          "type": "number",
-          "markdownDescription": "Optional: Sets the max number of tokens (characters or words) for the model's output. The total tokens, including the input and output, must not exceed the model's maximum context length (e.g., 4096 for `gpt-3.5-turbo` and 8192 for `gpt-4`). Default is 0 which means it will caclulate on its own."
-        },
         "chatgpt-vscode.promptPrefix.refactorCode": {
           "type": "string",
           "default": "Refactor this code to enhance its simplicity and improve readability.",
           "description": "Refactor code prompt."
         },
-        "chatgpt-vscode.promptPrefix.refactorCode-enabled": {
+        "chatgpt-vscode.promptPrefix.enableRefactorCode": {
           "type": "boolean",
           "default": true,
-          "description": "Enable the refactor code context menu"
+          "description": "Enable the refactor code option in the context menu"
         },
         "chatgpt-vscode.promptPrefix.findProblems": {
           "type": "string",
           "default": "Identify any current or potential future issues in this code, regardless of whether they are immediately apparent.",
           "description": "Find problems prompt."
         },
-        "chatgpt-vscode.promptPrefix.findProblems-enabled": {
+        "chatgpt-vscode.promptPrefix.enableFindProblems": {
           "type": "boolean",
           "default": true,
-          "description": "Enable the find problems context menu"
+          "description": "Enable the find problems option in the context menu"
         },
         "chatgpt-vscode.promptPrefix.optimize": {
           "type": "string",
           "default": "Optimize this code using latest techniques: ",
           "description": "Optimize code prompt."
         },
-        "chatgpt-vscode.promptPrefix.optimize-enabled": {
+        "chatgpt-vscode.promptPrefix.enableOptimize": {
           "type": "boolean",
           "default": true,
-          "description": "Enable optimization context menu"
+          "description": "Enable the optimize option in the context menu"
         },
         "chatgpt-vscode.promptPrefix.explain": {
           "type": "string",
           "default": "Explain this code as if you were an expert university computer science professor.",
           "description": "Explain code prompt."
         },
-        "chatgpt-vscode.promptPrefix.explain-enabled": {
+        "chatgpt-vscode.promptPrefix.enableExplain": {
           "type": "boolean",
           "default": true,
-          "description": "Enable explain code context menu"
+          "description": "Enable the explain code option in the context menu"
         },
         "chatgpt-vscode.promptPrefix.addComments": {
           "type": "string",
           "default": "Add detailed comments to each block of logic within this code: ",
           "description": "Add comments prompt."
         },
-        "chatgpt-vscode.promptPrefix.addComments-enabled": {
+        "chatgpt-vscode.promptPrefix.enableAddComments": {
           "type": "boolean",
           "default": true,
-          "description": "Enable add comments context menu"
+          "description": "Enable the add comments option in the context menu"
         },
         "chatgpt-vscode.promptPrefix.completeCode": {
           "type": "string",
           "default": "Please complete the following code: ",
           "description": "Complete code prompt."
         },
-        "chatgpt-vscode.promptPrefix.completeCode-enabled": {
+        "chatgpt-vscode.promptPrefix.enableCompleteCode": {
           "type": "boolean",
           "default": true,
-          "description": "Enable complete code context menu"
+          "description": "Enable the complete code option in the context menu"
         },
-        "chatgpt-vscode.promptPrefix.customPrompt-enabled": {
+        "chatgpt-vscode.promptPrefix.enableCustomCode": {
           "type": "boolean",
           "default": true,
-          "description": "Enable the prompt prefix used for adhoc command for the selected code in the context menu"
+          "description": "Enable the custom prompt option in the context menu"
         },
         "chatgpt-vscode.temperature": {
           "type": "number",
@@ -287,25 +283,15 @@
           "default": 0,
           "markdownDescription": "Defines 'nucleus sampling', an alternative to temperature sampling. The model will consider tokens within the top `top_p` probability mass. For instance, 0.1 would consider the top 10% probability tokens. It's advisable to adjust either this or `temperature`, not both."
         },
-        "chatgpt-vscode.response.showNotification": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enables notifications when the ChatGPT bot responds to your input."
-        },
-        "chatgpt-vscode.response.autoScroll": {
-          "type": "boolean",
-          "default": true,
-          "description": "With this enabled, the extension will automatically scroll to the bottom when a new question or response is added. To change this, disable the setting."
-        },
         "chatgpt-vscode.systemPrompt": {
           "type": "string",
           "default": "You are {name}, a programming assistant. Your task is to assist with software development. Write clean code, be mindful of the conversation history, follow best practices and ensure code quality and corectness. Your code should accomplish the task given by the user but also be easy to understand and modify.",
-          "markdownDescription": "The system prompt defines the behavior of the language model."
+          "markdownDescription": "Defines the behavior of the language model. Use the {name} argument to replace with assistant name."
         },
-        "chatgpt-vscode.conversationHistoryAmount": {
-          "type": "integer",
-          "default": 6,
-          "description": "The amount of conversations the model will keep in memory."
+        "chatgpt-vscode.maxHistoryMessages": {
+          "type": "number",
+          "default": 8,
+          "markdownDescription": "Limits the model's prompt memory"
         }
       }
     }

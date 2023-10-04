@@ -17,7 +17,7 @@ export async function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(`chatgpt-vscode.${name}`, handler));
     }
 
-    function sendMessage(type: string, data: string) {
+    function sendMessage(type: string, data: object) {
         provider.webviewView.webview.postMessage({ type: type, data: data });
     }
 }
