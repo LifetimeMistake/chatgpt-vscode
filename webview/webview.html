@@ -8,7 +8,7 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        h1 {
+        body {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -17,23 +17,23 @@
     <script src="https://code.jquery.com/jquery-3.4.0.min.js"></script>
 </head>
 
-<body class="h-screen flex flex-col">
-    <div id="main-panel" class="bg-neutral-800 flex-grow overflow-y-scroll">
+<body class="h-screen w-screen flex flex-col bg-neutral-900">
+    <div id="main-panel" class="bg-neutral-900 flex-grow overflow-y-auto">
         <div id="introduction" class="">
             <img class="w-64 mx-auto mt-10"
                 src="https://cuddlyoctopus.com/wp-content/uploads/2019/11/KI-032A-Astolfo-750x750.png">
             <h1 class="text-3xl mx-auto mt-1 w-max font-bold text-white">GPT for VSCode</h1>
             <p class="mx-auto w-max mt-3">Your coding assistant</p>
-            <div class="flex flex-col space-y-10 mt-10 mx-auto w-auto items-center">
-                <p class="p-2 px-3 border-4 border-neutral-500 rounded-md w-full text-center">Advanced Pegging Support
+            <div class="flex flex-col space-y-10 mt-10 mx-10 w-auto items-center">
+                <p class="p-2 border-4 border-neutral-500 rounded-md w-full text-center">Advanced Pegging Support
                 </p>
-                <p class="p-2 px-3 border-4 border-neutral-500 rounded-md w-full text-center">Trans and Femboy
+                <p class="p-2 border-4 border-neutral-500 rounded-md w-full text-center">Trans and Femboy
                     Compatibility
                 </p>
-                <p class="p-2 px-3 border-4 border-neutral-500 rounded-md w-full text-center">Suck, Squeeze, Bang and
+                <p class="p-2 border-4 border-neutral-500 rounded-md w-full text-center">Suck, Squeeze, Bang and
                     Blow
                     Functionality</p>
-                <p class="p-2 px-3 border-4 border-neutral-500 rounded-md w-full text-center">I hate front-end so much
+                <p class="p-2 border-4 border-neutral-500 rounded-md w-full text-center">I hate front-end so much
                     help
                     me
                 </p>
@@ -42,15 +42,15 @@
         <div id="chat" class="hidden">
         </div>
     </div>
-    <div class="bg-neutral-900 flex flex-row">
+    <div id="input-panel" class="bg-neutral-700 flex flex-row mx-3 mb-5 h-9 justify-center">
         <textarea id="input-area"
-            class="bg-neutral-900 placeholder:text-neutral-400 text-sm overflow-y-auto resize-none p-3 flex-grow"
-            placeholder="Ask something..."></textarea>
-        <div class="flex px-3 justify-center relative">
-            <ul id="options-list" class="absolute bg-neutral-700 -top-16 -left-28 w-max shadow-xl hidden">
+            class="bg-neutral-700 placeholder:text-neutral-400 text-sm overflow-y-auto resize-none p-2 flex-grow"
+            placeholder="Ask a question..."></textarea>
+        <div class="flex px-1 justify-center relative">
+            <ul id="options-list" class="absolute bg-neutral-600 -top-16 -left-28 w-max shadow-xl hidden">
                 <li>
                     <button id="newchat-button"
-                        class="hover:bg-neutral-600 p-2 w-full flex flex-row justify-between items-center">
+                        class="hover:bg-neutral-500 p-2 w-full flex flex-row justify-between items-center">
                         <span class="material-symbols-outlined mr-5 w-6">add_box
                         </span>
                         <span class="text-center align-middle">
@@ -60,7 +60,7 @@
                 </li>
                 <li>
                     <button id="settings-button"
-                        class="hover:bg-neutral-600 p-2 w-full flex flex-row justify-between items-center">
+                        class="hover:bg-neutral-500 p-2 w-full flex flex-row justify-between items-center">
                         <span class="material-symbols-outlined mr-5 w-6">
                             settings
                         </span>
@@ -72,19 +72,26 @@
             </ul>
             <button id="options-button" class="mx-auto my-auto group">
                 <span
-                    class="material-symbols-outlined p-1 rounded-md group-hover:bg-neutral-700 transition-all duration-300 ease-out">
+                    class="material-symbols-outlined p-0.5 rounded-md group-hover:bg-neutral-600 transition-all duration-300 ease-out">
                     more_vert
                 </span></i>
             </button>
         </div>
-        <div class="flex px-3 justify-center">
+        <div class="flex px-1 justify-center">
             <button id="send-button" class="mx-auto my-auto group">
                 <span
-                    class="material-symbols-outlined p-1 rounded-md group-hover:bg-neutral-700 transition-all duration-300 ease-out">
+                    class="material-symbols-outlined p-0.5 rounded-md group-hover:bg-neutral-600 transition-all duration-300 ease-out">
                     send
                 </span></i>
             </button>
         </div>
+        <button id="stopButton"
+            class="absolute bg-neutral-600 p-2 hover:bg-neutral-500 mx-auto -translate-y-14 rounded-md flex flex-row items-center hidden"><span
+                class="material-symbols-outlined text-base h-full mr-1">
+                close
+            </span>
+            <span>Stop responding</span>
+        </button>
     </div>
     <script id="mainJs" src=""></script>
 </body>
