@@ -185,7 +185,7 @@
             "gpt-3.5-turbo-16k",
             "gpt-3.5-turbo-16k-0613"
           ],
-          "default": "gpt-4-0613",
+          "default": "gpt-3.5-turbo",
           "markdownDescription": "OpenAI language model",
           "enumItemLabels": [
             "GPT-4",
@@ -292,6 +292,15 @@
           "type": "number",
           "default": 8,
           "markdownDescription": "Limits the model's prompt memory"
+        },
+        "chatgpt-vscode.samplingMethod": {
+          "type": "string",
+          "enum": [
+            "Temperature",
+            "Top_p"
+          ],
+          "default": "Temperature",
+          "markdownDescription": "Defines which sampling method to use on the model."
         }
       }
     }

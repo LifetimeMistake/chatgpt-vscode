@@ -16,6 +16,12 @@ export class MessageHistory {
         this.systemMessage = systemMessageFactory;
     }
 
+    public removeMessage(id: string) {
+        var messageIndex = this.messages.findIndex(m => m.id === id);
+        if (messageIndex === -1) { throw Error("Invalid message id!"); }
+        this.messages.splice(messageIndex, 1);
+    }
+
     public pushUserMessage(id: string, content: string): UserMessage {
         var message = new UserMessage(id, content);
         this.messages.push(message);
@@ -96,7 +102,10 @@ export class SystemMessageFactory {
     }
 
     public produceMessage(): SystemMessage | UserMessage {
-        var content = `${this.prompt} ${this.mixins}`;
+        var content = this.prompt;
+        this.mixins.forEach(m => {
+            content += ` ${m}`;
+        });
 
         var message: SystemMessage | UserMessage;
         if (this.useSystemRole) {

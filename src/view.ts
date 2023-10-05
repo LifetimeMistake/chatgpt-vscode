@@ -1,10 +1,13 @@
 import * as cheerio from 'cheerio';
 import * as fs from 'fs';
+import { v4 as uuid } from "uuid";
 import * as vscode from 'vscode';
-import { AuthenticationMethod, AzureAuthentication, GPTRequestManager, OpenAIAuthentication } from "./api";
+import { AuthenticationMethod, AzureAuthentication, ErrorStop, FunctionCallStop, GPTRequestManager, MessageStop, OpenAIAuthentication, OpenAIRequest } from "./api";
+import { FunctionRegistry } from "./functions";
 import { MessageHistory, SystemMessageFactory } from "./history";
 
 const USER_PROMPT_REQUEST = 'userPromptRequest';
+const USER_EDIT_REQUEST = 'userEditRequest';
 const OPEN_SETTINGS_REQUEST = 'openSettingsRequest';
 
 const USER_PROMPT_RESPONSE = 'userPromptResponse';
@@ -19,10 +22,14 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     private gptRequestManager?: GPTRequestManager;
     private systemMessageFactory?: SystemMessageFactory;
     private messageHistory?: MessageHistory;
+    public functionRegistry?: FunctionRegistry;
 
     private model: string;
     private temperature: number;
     private top_p: number;
+
+    private isStreaming: boolean = false;
+    private currentMessageId: string;
 
 
     constructor(context: vscode.ExtensionContext) {
@@ -30,7 +37,6 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     public resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext<unknown>, token: vscode.CancellationToken): void | Thenable<void> {
-        // webview
         this.webviewView = webviewView;
         var webview = webviewView.webview;
         webview.options = {
@@ -49,12 +55,63 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             }
         });
 
+        this.gptRequestManager.onContentReceived((content) => {
+            if (this.currentMessageId === null) { this.currentMessageId = uuid(); }
+
+            this.sendMessage(ASSISTANT_TOKEN_RESPONSE, { id: this.currentMessageId, content: content });
+        });
+
+        this.gptRequestManager;
+
+        this.addMesageListener(USER_PROMPT_REQUEST, (data) => {
+            this.sendUserPrompt(data);
+        });
+
+        this.addMesageListener(USER_EDIT_REQUEST, (data) => {
+
+        });
+
         this.addMesageListener(OPEN_SETTINGS_REQUEST, () => {
             vscode.commands.executeCommand('workbench.action.openSettings', "@ext:lifetimemistake.chatgpt-vscode chatgpt-vscode.");
         });
     }
 
-    addMesageListener(type: string, handler: (() => void) | ((data: string) => void)) {
+    public sendUserPrompt(content: string, systemMessages?: string[]): boolean {
+        if (this.isStreaming) { return false; }
+        var message = this.messageHistory.pushUserMessage(uuid(), content);
+        if (systemMessages) { message.systemMessages = systemMessages; }
+        this.sendRequest();
+        this.sendMessage(USER_PROMPT_RESPONSE, { id: message.id, content: content });
+        return true;
+    }
+
+    async sendRequest() {
+        var functions = this.functionRegistry.toObject();
+        if (!this.functionRegistry.hasFunctions()) {
+            functions = null;
+        }
+
+        var request = new OpenAIRequest(this.model, this.messageHistory.toObject(), functions, this.temperature, this.top_p);
+        console.log(this.functionRegistry.toObject());
+
+        this.isStreaming = true;
+
+        var stop = await this.gptRequestManager.runRequest(request);
+        if (stop instanceof MessageStop) {
+            this.messageHistory.pushAssistantMessage(this.currentMessageId, stop.content);
+            this.sendMessage(ASSISTANT_STOP_RESPONSE);
+        } else if (stop instanceof ErrorStop) {
+            this.sendMessage(ASSISTANT_ERROR_RESPONSE);
+        } else if (stop instanceof FunctionCallStop) {
+            this.sendMessage(ASSISTANT_CALL_RESPONSE);
+            this.messageHistory.pushAssistantCallMessage(this.currentMessageId, stop.name, stop.arguments);
+        }
+
+        this.currentMessageId = null;
+        this.isStreaming = false;
+    }
+
+    addMesageListener(type: string, handler: (() => void) | ((data: any) => void)) {
         this.webviewView.webview.onDidReceiveMessage(
             message => {
                 if (message.type === type) {
@@ -64,7 +121,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         );
     }
 
-    sendMessage(type: string, data: object) {
+    sendMessage(type: string, data?: any) {
         this.webviewView.webview.postMessage({ type: type, data: data });
     }
 
@@ -80,19 +137,31 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 var organization = vscode.workspace.getConfiguration("chatgpt-vscode").get("organizationName") as string;
                 if (organization.length === 0) { organization = null; }
                 auth = new OpenAIAuthentication(apiKey, baseUrl, organization);
+                break;
             case "Azure":
                 var deploymentUrl = vscode.workspace.getConfiguration("chatgpt-vscode").get("azureDeploymentUrl") as string;
                 var azureApiVersion = vscode.workspace.getConfiguration("chatgpt-vscode").get("azureApiVersion") as string;
                 if (azureApiVersion.length === 0) { azureApiVersion = null; }
                 auth = new AzureAuthentication(apiKey, deploymentUrl, azureApiVersion);
+                break;
         }
 
         var clientOptions = auth.getAuthObject();
         this.gptRequestManager = new GPTRequestManager(clientOptions);
 
         this.model = vscode.workspace.getConfiguration("chatgpt-vscode").get("model") as string;
+        var samplingMethod = vscode.workspace.getConfiguration("chatgpt-vscode").get("samplingMethod") as string;
         this.temperature = vscode.workspace.getConfiguration("chatgpt-vscode").get("temperature");
         this.top_p = vscode.workspace.getConfiguration("chatgpt-vscode").get("top_p");
+        switch (samplingMethod) {
+            case "Temperature":
+                this.top_p = null;
+                break;
+            case "Top_p":
+                this.temperature = null;
+                break;
+        }
+
 
         var systemPrompt = vscode.workspace.getConfiguration("chatgpt-vscode").get("systemPrompt") as string;
         var assistantName = vscode.workspace.getConfiguration("chatgpt-vscode").get("assistantName") as string;
@@ -113,5 +182,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         if (!this.messageHistory) {
             this.messageHistory = new MessageHistory(maxMessages, this.systemMessageFactory);
         }
+
+        this.functionRegistry = new FunctionRegistry();
     }
 }
