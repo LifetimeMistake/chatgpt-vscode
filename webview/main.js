@@ -80,8 +80,15 @@ class ChatManager {
     static promptLanguage = "";
 
     static async createUserPrompt(id, content) {
+        const chatElement = document.getElementById('chat');
+        const introElement = document.getElementById('introduction');
+
+        if (chatElement.classList.contains("hidden")) {
+            chatElement.classList.toggle("hidden");
+            introElement.classList.toggle("hidden");
+        }
+
         var isScrolledMax = this.isScrolledMax();
-        console.log(isScrolledMax);
         const promptElement = document.createElement('div');
         promptElement.className = 'bg-neutral-700 p-5';
         promptElement.id = `promptDiv-${id}`;
@@ -227,7 +234,6 @@ class ChatManager {
 
         var newLength = this.prompts.findIndex(p => p.id === id) + 1;
         this.prompts.length = newLength;
-        console.log(this.prompts);
 
         var promptDiv = document.getElementById(`promptDiv-${id}`);
         var nextSibling = promptDiv.nextSibling;
@@ -263,7 +269,6 @@ class ChatManager {
         }
 
         prompt.content += token;
-        console.log(token);
 
         let existingMessage = document.getElementById(`prompt-${id}`);
         let updatedValue = "";
@@ -373,10 +378,8 @@ class ChatManager {
 
     static isScrolledMax() {
         var currentScroll = document.getElementById('main-panel').scrollTop;
-        console.log(currentScroll);
         document.getElementById('main-panel').scrollTop += 9999;
         var maxScroll = document.getElementById('main-panel').scrollTop;
-        console.log(maxScroll);
 
         if (currentScroll === maxScroll) {
             return true;
