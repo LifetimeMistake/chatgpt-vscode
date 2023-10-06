@@ -17,8 +17,8 @@ export class MessageHistory {
         this.systemMessage = systemMessageFactory;
     }
 
-    public pushUserMessage(id: string, content: string): UserMessage {
-        var message = new UserMessage(id, content);
+    public pushUserMessage(id: string, content: string, code?: string): UserMessage {
+        var message = new UserMessage(id, content, code);
         this.messages.push(message);
         this.eventEmitter.emit(USER_REQUEST_EVENT, message);
         return message;

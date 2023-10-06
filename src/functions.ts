@@ -5,12 +5,12 @@ export class FunctionRegistry {
         this.functions = new Map<string, FunctionInfo>();
     }
 
-    public registerFunction(func: (args: object) => string, name: string, parameters: PropertyInfo[], description?: string) {
+    public registerFunction(func: (args: object) => string, name: string, parameters: PropertyInfo[], description?: string, statusMessage?: string) {
         if (this.functions.has(name)) {
             throw new Error(`Function ${name} is already registered!`);
         }
 
-        var functionInfo = new FunctionInfo(func, name, parameters, description);
+        var functionInfo = new FunctionInfo(func, name, parameters, description, statusMessage);
         this.functions.set(name, functionInfo);
     }
 
@@ -85,12 +85,14 @@ export class FunctionInfo {
     public name: string;
     public properties: PropertyInfo[];
     public description?: string;
+    public statusMessage?: string;
 
-    constructor(func: (args: object) => string, name: string, parameters: PropertyInfo[], description?: string) {
+    constructor(func: (args: object) => string, name: string, parameters: PropertyInfo[], description?: string, statusMessage?: string) {
         this.func = func;
         this.name = name;
         this.properties = parameters;
         this.description = description;
+        this.statusMessage = statusMessage;
     }
 }
 

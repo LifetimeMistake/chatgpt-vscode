@@ -136,7 +136,7 @@
           "default": "GPT",
           "markdownDescription": "Custom name of the assistant"
         },
-        "chatgpt-vscode.method": {
+        "chatgpt-vscode.authMethod": {
           "type": "string",
           "enum": [
             "OpenAI",
@@ -149,7 +149,7 @@
           "type": "string",
           "markdownDescription": "Azure or OpenAI API Key"
         },
-        "chatgpt-vscode.apiBaseUrl": {
+        "chatgpt-vscode.baseUrl": {
           "type": "string",
           "default": "https://api.openai.com/v1",
           "markdownDescription": "(Optional) OpenAI Base URL."
@@ -268,7 +268,7 @@
           "default": true,
           "description": "Enable the complete code option in the context menu"
         },
-        "chatgpt-vscode.promptPrefix.enableCustomCode": {
+        "chatgpt-vscode.promptPrefix.enableCustomPrompt": {
           "type": "boolean",
           "default": true,
           "description": "Enable the custom prompt option in the context menu"
@@ -279,6 +279,7 @@
           "markdownDescription": "Sets the sampling 'temperature'. Higher values result in riskier outputs, making the model more creative. A value of 0.9 is suggested for creative applications, while 0 is for tasks with a well-defined answer. It's advisable to adjust either this or `top_p`, not both. More info in the [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-temperature)."
         },
         "chatgpt-vscode.top_p": {
+          "title": "Nucleus sampling (top_p)",
           "type": "number",
           "default": 0,
           "markdownDescription": "Defines 'nucleus sampling', an alternative to temperature sampling. The model will consider tokens within the top `top_p` probability mass. For instance, 0.1 would consider the top 10% probability tokens. It's advisable to adjust either this or `temperature`, not both."

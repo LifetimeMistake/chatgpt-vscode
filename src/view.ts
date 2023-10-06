@@ -1,15 +1,16 @@
-import * as cheerio from 'cheerio';
 import * as fs from 'fs';
+import { EventEmitter } from "stream";
 import { v4 as uuid } from "uuid";
 import * as vscode from 'vscode';
 import { AuthenticationMethod, AzureAuthentication, ErrorStop, FunctionCallStop, GPTRequestManager, MessageStop, OpenAIAuthentication, OpenAIRequest } from "./api";
-import { FunctionRegistry } from "./functions";
+import { FunctionRegistry, ParameterType, PropertyInfo } from "./functions";
 import { MessageHistory, SystemMessageFactory } from "./history";
 
 const USER_PROMPT_REQUEST = 'userPromptRequest';
 const USER_EDIT_REQUEST = 'userEditRequest';
 const OPEN_SETTINGS_REQUEST = 'openSettingsRequest';
 const NEW_CHAT_REQUEST = 'newChatRequest';
+const USER_ABORT_REQUEST = 'userAbortRequest';
 
 const USER_PROMPT_RESPONSE = 'userPromptResponse';
 const ASSISTANT_TOKEN_RESPONSE = 'assistantTokenResponse';
@@ -17,29 +18,56 @@ const ASSISTANT_STOP_RESPONSE = 'assistantStopResponse';
 const ASSISTANT_CALL_RESPONSE = 'assistantCallResponse';
 const ASSISTANT_ERROR_RESPONSE = 'assistantErrorResponse';
 
+const CHANGE_NAME_RESPONSE = 'changeNameResponse';
+
+const CONTENT_RECEIVED_EVENT = 'contentReceivedEvent';
+const CALL_STARTED_EVENT = 'callReceivedEvent';
+const MESSAGE_STOP_EVENT = 'messageStopEvent';
+const ERROR_STOP_EVENT = 'errorStopEvent';
+const USER_PROMPT_EVENT = 'userPromptEvent';
+
 export class ChatViewProvider implements vscode.WebviewViewProvider {
     public webviewView?: vscode.WebviewView;
     private extensionContext: vscode.ExtensionContext;
-    private gptRequestManager?: GPTRequestManager;
-    private systemMessageFactory?: SystemMessageFactory;
-    private messageHistory?: MessageHistory;
+    public gptTransactionHandler?: GPTTransactionHandler;
+    public systemMessageFactory?: SystemMessageFactory;
+    public extensionMessenger?: ExtensionMessenger;
     public functionRegistry?: FunctionRegistry;
+    public messageHistory?: MessageHistory;
 
-    private model: string;
-    private temperature: number;
-    private top_p: number;
-
-    private isStreaming: boolean = false;
-    private currentMessageId: string = null;
-
-    private test: string = "";
-
+    private settings: Settings;
 
     constructor(context: vscode.ExtensionContext) {
         this.extensionContext = context;
+        this.settings = new Settings();
     }
 
     public resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext<unknown>, token: vscode.CancellationToken): void | Thenable<void> {
+        this.extensionMessenger = new ExtensionMessenger(webviewView.webview);
+        this.functionRegistry = new FunctionRegistry();
+
+        var useSystemRole: boolean = Settings.settings[SettingName.model].startsWith('gpt-4');
+        let assistantName = Settings.settings[SettingName.assistantName];
+        var systemPrompt = Settings.settings[SettingName.systemPrompt].replace('{name}', assistantName);
+        if (systemPrompt.length === 0) {
+            systemPrompt = null;
+        }
+
+        this.systemMessageFactory = new SystemMessageFactory(useSystemRole, systemPrompt);
+        Settings.onSettingChanged(SettingName.model, () => {
+            var useSystemRole: boolean = Settings.settings[SettingName.model].startsWith('gpt-4');
+            this.systemMessageFactory.useSystemRole = useSystemRole;
+        });
+        Settings.onSettingChanged(SettingName.systemPrompt, () => {
+            let assistantName = Settings.settings[SettingName.assistantName];
+            this.systemMessageFactory.prompt = Settings.settings[SettingName.systemPrompt].replace("{name}", assistantName);
+        });
+
+        this.messageHistory = new MessageHistory(Settings.settings[SettingName.maxHistoryMessages], this.systemMessageFactory);
+        Settings.onSettingChanged(SettingName.systemPrompt, () => {
+            this.messageHistory.maxMessages = Settings.settings[SettingName.maxHistoryMessages];
+        });
+
         this.webviewView = webviewView;
         var webview = webviewView.webview;
         webview.options = {
@@ -47,80 +75,86 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         };
         var mainJS = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionContext.extensionUri, 'webview', 'main.js'));
         var htmlContent: string = fs.readFileSync(vscode.Uri.joinPath(this.extensionContext.extensionUri, 'webview', 'webview.html').fsPath, 'utf-8');
-        var $ = cheerio.load(htmlContent);
-        $("#mainJs").attr("src", mainJS.toString());
-        webview.html = $.html();
+        htmlContent = htmlContent.replace("{mainJs}", mainJS.toString());
+        webview.html = htmlContent;
 
-        this.reloadSettings();
-        vscode.workspace.onDidChangeConfiguration((e) => {
-            if (e.affectsConfiguration("chatgpt-vscode")) {
-                this.reloadSettings();
+        Settings.onSettingChanged(SettingName.assistantName, () => {
+            this.extensionMessenger.sendMessage(CHANGE_NAME_RESPONSE, Settings.settings[SettingName.assistantName]);
+        });
+
+        this.gptTransactionHandler = new GPTTransactionHandler(this.messageHistory, this.functionRegistry);
+
+        this.gptTransactionHandler.onContentReceived((content) => {
+            this.gptTransactionHandler.currentMessageId = this.gptTransactionHandler.currentMessageId || uuid();
+            this.extensionMessenger.sendMessage(ASSISTANT_TOKEN_RESPONSE, { id: this.gptTransactionHandler.currentMessageId, content });
+        });
+
+        this.gptTransactionHandler.onCallStarted((name) => {
+            var func = this.functionRegistry.getFunctionByName(name);
+            if (!func) {
+                return;
             }
+
+            const content = func.statusMessage ? func.statusMessage : `Calling function: '${func.name}'`;
+            this.extensionMessenger.sendMessage(ASSISTANT_CALL_RESPONSE, content);
         });
 
-        this.gptRequestManager.onContentReceived((content) => {
-            if (this.currentMessageId === null) { this.currentMessageId = uuid(); }
-
-            this.sendMessage(ASSISTANT_TOKEN_RESPONSE, { id: this.currentMessageId, content: content });
-            this.test += content;
+        this.gptTransactionHandler.onMessageStop((id) => {
+            this.extensionMessenger.sendMessage(ASSISTANT_STOP_RESPONSE, id);
         });
 
-        this.gptRequestManager;
-
-        this.addMesageListener(USER_PROMPT_REQUEST, (data) => {
-            this.sendUserPrompt(data);
+        this.gptTransactionHandler.onErrorStop((error) => {
+            this.extensionMessenger.sendMessage(ASSISTANT_ERROR_RESPONSE, error);
         });
 
-        this.addMesageListener(USER_EDIT_REQUEST, (data) => {
+        this.gptTransactionHandler.onUserPrompt((id, content) => {
+            this.extensionMessenger.sendMessage(USER_PROMPT_RESPONSE, { id: id, content: content });
+        });
+
+        this.extensionMessenger.addMesageListener(USER_PROMPT_REQUEST, (data) => {
+            this.gptTransactionHandler.sendUserPrompt(data);
+        });
+
+        this.extensionMessenger.addMesageListener(USER_EDIT_REQUEST, (data) => {
             this.messageHistory.editUserMessage(data.id, data.content);
-            this.sendRequest();
+            this.gptTransactionHandler.sendRequest();
         });
 
-        this.addMesageListener(NEW_CHAT_REQUEST, () => {
+        this.extensionMessenger.addMesageListener(NEW_CHAT_REQUEST, () => {
             this.messageHistory.clearMessages();
         });
 
-        this.addMesageListener(OPEN_SETTINGS_REQUEST, () => {
+        this.extensionMessenger.addMesageListener(OPEN_SETTINGS_REQUEST, () => {
             vscode.commands.executeCommand('workbench.action.openSettings', "@ext:lifetimemistake.chatgpt-vscode chatgpt-vscode.");
         });
+
+        this.extensionMessenger.addMesageListener(USER_ABORT_REQUEST, () => {
+            this.gptTransactionHandler.abortRequest();
+        });
+
+        var property = new PropertyInfo("property", ParameterType.string, true, "The name of the property", ["maxLogs", "logLevel", "isMain"]);
+        this.functionRegistry.registerFunction((args) => {
+            switch (args["property"]) {
+                case "maxLogs":
+                    return "10";
+                case "logLevel":
+                    return "DEBUG";
+                case "isMain":
+                    return "true";
+            }
+        }, "getMainClassProperty", [property], "Get the value of a property in the main class", "Getting main class property...");
     }
+}
 
-    public sendUserPrompt(content: string, systemMessages?: string[]): boolean {
-        if (this.isStreaming) { return false; }
-        var message = this.messageHistory.pushUserMessage(uuid(), content);
-        if (systemMessages) { message.systemMessages = systemMessages; }
-        this.sendRequest();
-        this.sendMessage(USER_PROMPT_RESPONSE, { id: message.id, content: content });
-        return true;
-    }
+class ExtensionMessenger {
+    private webview: vscode.Webview;
 
-    async sendRequest() {
-        var functions = this.functionRegistry.toObject();
-        if (!this.functionRegistry.hasFunctions()) {
-            functions = null;
-        }
-
-        var request = new OpenAIRequest(this.model, this.messageHistory.toObject(), functions, this.temperature, this.top_p);
-        console.log(this.functionRegistry.toObject());
-
-        this.isStreaming = true;
-
-        var stop = await this.gptRequestManager.runRequest(request);
-        if (stop instanceof MessageStop) {
-            this.messageHistory.pushAssistantMessage(this.currentMessageId, stop.content);
-            this.sendMessage(ASSISTANT_STOP_RESPONSE, { id: this.currentMessageId });
-        } else if (stop instanceof ErrorStop) {
-            this.sendMessage(ASSISTANT_ERROR_RESPONSE, stop.message);
-        } else if (stop instanceof FunctionCallStop) {
-            this.messageHistory.pushAssistantCallMessage(this.currentMessageId, stop.name, stop.arguments);
-        }
-
-        this.currentMessageId = null;
-        this.isStreaming = false;
+    constructor(webview: vscode.Webview) {
+        this.webview = webview;
     }
 
     addMesageListener(type: string, handler: (() => void) | ((data: any) => void)) {
-        this.webviewView.webview.onDidReceiveMessage(
+        this.webview.onDidReceiveMessage(
             message => {
                 if (message.type === type) {
                     handler(message.data);
@@ -130,70 +164,229 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     sendMessage(type: string, data?: any) {
-        this.webviewView.webview.postMessage({ type: type, data: data });
+        this.webview.postMessage({ type: type, data: data });
+    }
+}
+
+class GPTTransactionHandler {
+    private messageHistory: MessageHistory;
+    private gptRequestManager: GPTRequestManager;
+    private functionRegistry: FunctionRegistry;
+
+    public isStreaming: boolean;
+    public currentMessageId: string;
+
+    private eventEmitter: EventEmitter;
+
+    constructor(messageHistory: MessageHistory, functionRegistry: FunctionRegistry) {
+        this.messageHistory = messageHistory;
+        this.functionRegistry = functionRegistry;
+        this.eventEmitter = new EventEmitter();
+
+        Settings.onSettingChanged(SettingName.apiKey, () => { this.getRequestManager(); });
+        Settings.onSettingChanged(SettingName.authMethod, () => { this.getRequestManager(); });
+        Settings.onSettingChanged(SettingName.baseUrl, () => { this.getRequestManager(); });
+        Settings.onSettingChanged(SettingName.organizationName, () => { this.getRequestManager(); });
+        Settings.onSettingChanged(SettingName.azureDeploymentUrl, () => { this.getRequestManager(); });
+        Settings.onSettingChanged(SettingName.azureApiVersion, () => { this.getRequestManager(); });
+
+        this.getRequestManager();
+        this.isStreaming = false;
+        this.currentMessageId = null;
     }
 
-    reloadSettings() {
-        var auth: AuthenticationMethod;
-        var authMethod = vscode.workspace.getConfiguration("chatgpt-vscode").get("method");
+    onCallStarted(handler: (name: string) => void) {
+        this.eventEmitter.on(CALL_STARTED_EVENT, handler);
+    }
 
-        var apiKey = vscode.workspace.getConfiguration("chatgpt-vscode").get("apiKey") as string;
-        if (apiKey.length === 0) {
-            vscode.window.showErrorMessage("");
-        }
+    offCallStarted(handler: (name: string) => void) {
+        this.eventEmitter.off(CALL_STARTED_EVENT, handler);
+    }
+
+    onContentReceived(handler: (content: string) => void) {
+        this.eventEmitter.on(CONTENT_RECEIVED_EVENT, handler);
+    }
+
+    offContentReceived(handler: (content: string) => void) {
+        this.eventEmitter.off(CONTENT_RECEIVED_EVENT, handler);
+    }
+
+    onMessageStop(handler: (id: string) => void) {
+        this.eventEmitter.on(MESSAGE_STOP_EVENT, handler);
+    }
+
+    offMessageStop(handler: (id: string) => void) {
+        this.eventEmitter.off(MESSAGE_STOP_EVENT, handler);
+    }
+
+    onErrorStop(handler: (error: string) => void) {
+        this.eventEmitter.on(ERROR_STOP_EVENT, handler);
+    }
+
+    offErrorStop(handler: (error: string) => void) {
+        this.eventEmitter.off(ERROR_STOP_EVENT, handler);
+    }
+
+    onUserPrompt(handler: (id: string, content: string) => void) {
+        this.eventEmitter.on(USER_PROMPT_EVENT, handler);
+    }
+
+    offUserPrompt(handler: (id: string, content: string) => void) {
+        this.eventEmitter.off(USER_PROMPT_EVENT, handler);
+    }
+
+    private getRequestManager() {
+        var auth: AuthenticationMethod;
+        var authMethod = Settings.settings[SettingName.authMethod];
+
+        var apiKey = Settings.settings[SettingName.apiKey];
         switch (authMethod) {
             case "OpenAI":
-                var baseUrl = vscode.workspace.getConfiguration("chatgpt-vscode").get("apiBaseUrl") as string;
+                var baseUrl = Settings.settings[SettingName.baseUrl];
                 if (baseUrl.length === 0) { baseUrl = null; }
-                var organization = vscode.workspace.getConfiguration("chatgpt-vscode").get("organizationName") as string;
-                if (organization.length === 0) { organization = null; }
-                auth = new OpenAIAuthentication(apiKey, baseUrl, organization);
+                var organizationName = Settings.settings[SettingName.organizationName];
+                if (organizationName.length === 0) { baseUrl = null; }
+                auth = new OpenAIAuthentication(apiKey, baseUrl, organizationName);
                 break;
             case "Azure":
-                var deploymentUrl = vscode.workspace.getConfiguration("chatgpt-vscode").get("azureDeploymentUrl") as string;
-                var azureApiVersion = vscode.workspace.getConfiguration("chatgpt-vscode").get("azureApiVersion") as string;
-                if (azureApiVersion.length === 0) { azureApiVersion = null; }
-                auth = new AzureAuthentication(apiKey, deploymentUrl, azureApiVersion);
+                var azureDeploymentUrl = Settings.settings[SettingName.azureDeploymentUrl];
+                var azureApiVersion = Settings.settings[SettingName.azureApiVersion];
+                auth = new AzureAuthentication(apiKey, azureDeploymentUrl, azureApiVersion);
                 break;
         }
 
         var clientOptions = auth.getAuthObject();
         this.gptRequestManager = new GPTRequestManager(clientOptions);
+        this.gptRequestManager.onContentReceived((content) => { this.eventEmitter.emit(CONTENT_RECEIVED_EVENT, content); });
+        this.gptRequestManager.onFunctionCallStarted((name) => { this.eventEmitter.emit(CALL_STARTED_EVENT, name); });
+    }
 
-        this.model = vscode.workspace.getConfiguration("chatgpt-vscode").get("model") as string;
-        var samplingMethod = vscode.workspace.getConfiguration("chatgpt-vscode").get("samplingMethod") as string;
-        this.temperature = vscode.workspace.getConfiguration("chatgpt-vscode").get("temperature");
-        this.top_p = vscode.workspace.getConfiguration("chatgpt-vscode").get("top_p");
-        switch (samplingMethod) {
+    private sendCallPrompt(functionName: string, content: string) {
+        this.messageHistory.pushFunctionMessage(uuid(), functionName, content);
+        this.sendRequest();
+    }
+
+    public async sendRequest() {
+        var functions = this.functionRegistry.toObject();
+        if (!this.functionRegistry.hasFunctions()) {
+            functions = null;
+        }
+
+        var model = Settings.settings[SettingName.model];
+        var temperature = Settings.settings[SettingName.temperature];
+        var top_p = Settings.settings[SettingName.top_p];
+
+        switch (Settings.settings[SettingName.samplingMethod]) {
             case "Temperature":
-                this.top_p = null;
+                top_p = null;
                 break;
             case "Top_p":
-                this.temperature = null;
+                temperature = null;
                 break;
         }
 
+        var request = new OpenAIRequest(model, this.messageHistory.toObject(), functions, temperature, top_p);
 
-        var systemPrompt = vscode.workspace.getConfiguration("chatgpt-vscode").get("systemPrompt") as string;
-        var assistantName = vscode.workspace.getConfiguration("chatgpt-vscode").get("assistantName") as string;
-        systemPrompt = systemPrompt.replace("{name}", assistantName);
+        this.isStreaming = true;
 
-        var useSystemRole: boolean = false;
-        if (this.model.startsWith("gpt-4")) {
-            useSystemRole = true;
+        var stop = await this.gptRequestManager.runRequest(request);
+        if (stop instanceof MessageStop) {
+            this.messageHistory.pushAssistantMessage(this.currentMessageId, stop.content);
+            this.eventEmitter.emit(MESSAGE_STOP_EVENT, this.currentMessageId);
+        } else if (stop instanceof ErrorStop) {
+            this.eventEmitter.emit(ERROR_STOP_EVENT, stop.message);
+        } else if (stop instanceof FunctionCallStop) {
+            this.messageHistory.pushAssistantCallMessage(this.currentMessageId, stop.name, stop.arguments);
+
+            var funcInfo = this.functionRegistry.getFunctionByName(stop.name);
+            var response: string;
+            if (!funcInfo) {
+                response = `#SYSTEM: Unknown function`;
+            } else {
+                try {
+                    response = funcInfo.func(JSON.parse(stop.arguments));
+                } catch (error) {
+                    this.eventEmitter.emit(ERROR_STOP_EVENT, error.message);
+                    return;
+                }
+            }
+
+            this.sendCallPrompt(stop.name, response);
         }
-        if (!this.systemMessageFactory) {
-            this.systemMessageFactory = new SystemMessageFactory(useSystemRole, systemPrompt);
-        } else {
-            this.systemMessageFactory.useSystemRole = useSystemRole;
-            this.systemMessageFactory.prompt = systemPrompt;
-        }
 
-        var maxMessages = vscode.workspace.getConfiguration("chatgpt-vscode").get("maxHistoryMessages") as number;
-        if (!this.messageHistory) {
-            this.messageHistory = new MessageHistory(maxMessages, this.systemMessageFactory);
-        }
-
-        this.functionRegistry = new FunctionRegistry();
+        this.currentMessageId = null;
+        this.isStreaming = false;
     }
+
+    public abortRequest() {
+        this.gptRequestManager.abortRequest();
+    }
+
+    public sendUserPrompt(content: string, systemMessages?: string[], code?: string): boolean {
+        if (this.isStreaming) { return false; }
+        var message = this.messageHistory.pushUserMessage(uuid(), content, code);
+        if (systemMessages) { message.systemMessages = systemMessages; }
+        this.sendRequest();
+        this.eventEmitter.emit(USER_PROMPT_EVENT, message.id, content);
+        return true;
+    }
+}
+
+export class Settings {
+    static settings: { [name: string]: any; } = {};
+    static eventEmitter = new EventEmitter();
+
+    constructor() {
+        this.loadSettings();
+        this.subscribeToSettingChanges();
+    }
+
+    static onSettingChanged(settingName: SettingName, handler: () => void) {
+        Settings.eventEmitter.on(settingName, handler);
+    }
+
+    private loadSettings() {
+        Object.keys(SettingName).forEach((name) => {
+            const settingName = SettingName[name];
+            Settings.settings[settingName] = this.getConfig(settingName);
+        });
+    }
+
+    private subscribeToSettingChanges() {
+        vscode.workspace.onDidChangeConfiguration((e) => {
+            Object.keys(SettingName).forEach((name) => {
+                const settingName = SettingName[name];
+                if (e.affectsConfiguration(`chatgpt-vscode.${settingName}`)) {
+                    Settings.settings[settingName] = this.getConfig(settingName);
+                    Settings.eventEmitter.emit(settingName);
+                }
+            });
+        });
+    }
+
+    private getConfig(name: SettingName): any {
+        return vscode.workspace.getConfiguration("chatgpt-vscode").get(name);
+    }
+}
+
+export enum SettingName {
+    apiKey = "apiKey",
+    authMethod = "authMethod",
+    baseUrl = "baseUrl",
+    organizationName = "organizationName",
+    azureDeploymentUrl = "azureDeploymentUrl",
+    azureApiVersion = "azureApiVersion",
+    model = "model",
+    samplingMethod = "samplingMethod",
+    temperature = "temperature",
+    top_p = "top_p",
+    systemPrompt = "systemPrompt",
+    assistantName = "assistantName",
+    maxHistoryMessages = "maxHistoryMessages",
+    promptPrefixComments = "promptPrefix.addComments",
+    promptPrefixComplete = "promptPrefix.completeCode",
+    promptPrefixExplain = "promptPrefix.explain",
+    promptPrefixProblems = "promptPrefix.findProblems",
+    promptPrefixOptimize = "promptPrefix.optimize",
+    promptPrefixRefactor = "promptPrefix.refactorCode",
 }

@@ -29,20 +29,27 @@ export class UserMessage implements Message {
     readonly id: string;
     public systemMessages: string[];
     public content: string;
+    public code?: string;
 
-    constructor(id: string, content: string) {
+    constructor(id: string, content: string, code?: string) {
         this.content = content;
         this.role = MessageRole.user;
         this.systemMessages = [];
         this.id = id;
+        this.code = code;
     }
 
     toObject(): object {
         var content = this.content;
+        var codeMessage = `${this.code}\n\n` || "";
+        var mergedSystemMessages;
         if (this.systemMessages.length !== 0) {
-            var mergedSystemMessages = this.systemMessages.map(message => `#SYSTEM ${message}\n`).join("");
-            content = `${mergedSystemMessages}#SYSTEM User query below\n\n${this.content}`;
+            mergedSystemMessages = this.systemMessages.map(message => `#SYSTEM ${message}\n`).join("");
+        } else {
+            mergedSystemMessages = "";
         }
+
+        content = `${mergedSystemMessages}#SYSTEM User query below\n\n${codeMessage}\n\n${this.content}`;
 
         var message = {};
         message["role"] = "user";
