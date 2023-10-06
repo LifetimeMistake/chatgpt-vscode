@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import { v4 as uuid } from 'uuid';
 import { AssistantMessage, FunctionMessage, Message, SystemMessage, UserMessage } from "./messages";
 const USER_REQUEST_EVENT = "userRequest";
+const CLEAR_MESSAGES_EVENT = "clearMesssages";
 
 export class MessageHistory {
     private messages: Message[];
@@ -14,12 +15,6 @@ export class MessageHistory {
         this.maxMessages = maxMessages;
         this.eventEmitter = new EventEmitter();
         this.systemMessage = systemMessageFactory;
-    }
-
-    public removeMessage(id: string) {
-        var messageIndex = this.messages.findIndex(m => m.id === id);
-        if (messageIndex === -1) { throw Error("Invalid message id!"); }
-        this.messages.splice(messageIndex, 1);
     }
 
     public pushUserMessage(id: string, content: string): UserMessage {
@@ -55,12 +50,31 @@ export class MessageHistory {
         return message;
     }
 
+    public removeMessage(id: string) {
+        var messageIndex = this.messages.findIndex(m => m.id === id);
+        if (messageIndex === -1) { throw Error("Invalid message id!"); }
+        this.messages.splice(messageIndex, 1);
+    }
+
+    public clearMessages() {
+        this.messages = [];
+        this.eventEmitter.emit(CLEAR_MESSAGES_EVENT);
+    }
+
     public onUserRequest(handler: (message: UserMessage) => void) {
         this.eventEmitter.on(USER_REQUEST_EVENT, handler);
     }
 
     public offUserRequest(handler: (message: UserMessage) => void) {
         this.eventEmitter.off(USER_REQUEST_EVENT, handler);
+    }
+
+    public onClearMessages(handler: () => void) {
+        this.eventEmitter.on(CLEAR_MESSAGES_EVENT, handler);
+    }
+
+    public offClearMessages(handler: () => void) {
+        this.eventEmitter.off(CLEAR_MESSAGES_EVENT, handler);
     }
 
     public toObject(): object[] {

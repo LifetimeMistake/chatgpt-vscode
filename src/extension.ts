@@ -4,7 +4,7 @@ import { ChatViewProvider } from "./view";
 export async function activate(context: vscode.ExtensionContext) {
     const provider = new ChatViewProvider(context);
     const view = vscode.window.registerWebviewViewProvider(
-        "chatgpt-vscode.view",
+        "chatgpt-vscode.view2",
         provider,
         {
             webviewOptions: {

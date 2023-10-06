@@ -9,6 +9,7 @@ import { MessageHistory, SystemMessageFactory } from "./history";
 const USER_PROMPT_REQUEST = 'userPromptRequest';
 const USER_EDIT_REQUEST = 'userEditRequest';
 const OPEN_SETTINGS_REQUEST = 'openSettingsRequest';
+const NEW_CHAT_REQUEST = 'newChatRequest';
 
 const USER_PROMPT_RESPONSE = 'userPromptResponse';
 const ASSISTANT_TOKEN_RESPONSE = 'assistantTokenResponse';
@@ -29,7 +30,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     private top_p: number;
 
     private isStreaming: boolean = false;
-    private currentMessageId: string;
+    private currentMessageId: string = null;
+
+    private test: string = "";
 
 
     constructor(context: vscode.ExtensionContext) {
@@ -59,6 +62,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             if (this.currentMessageId === null) { this.currentMessageId = uuid(); }
 
             this.sendMessage(ASSISTANT_TOKEN_RESPONSE, { id: this.currentMessageId, content: content });
+            this.test += content;
         });
 
         this.gptRequestManager;
@@ -68,7 +72,12 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         });
 
         this.addMesageListener(USER_EDIT_REQUEST, (data) => {
+            this.messageHistory.editUserMessage(data.id, data.content);
+            this.sendRequest();
+        });
 
+        this.addMesageListener(NEW_CHAT_REQUEST, () => {
+            this.messageHistory.clearMessages();
         });
 
         this.addMesageListener(OPEN_SETTINGS_REQUEST, () => {
@@ -99,11 +108,10 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         var stop = await this.gptRequestManager.runRequest(request);
         if (stop instanceof MessageStop) {
             this.messageHistory.pushAssistantMessage(this.currentMessageId, stop.content);
-            this.sendMessage(ASSISTANT_STOP_RESPONSE);
+            this.sendMessage(ASSISTANT_STOP_RESPONSE, { id: this.currentMessageId });
         } else if (stop instanceof ErrorStop) {
-            this.sendMessage(ASSISTANT_ERROR_RESPONSE);
+            this.sendMessage(ASSISTANT_ERROR_RESPONSE, stop.error);
         } else if (stop instanceof FunctionCallStop) {
-            this.sendMessage(ASSISTANT_CALL_RESPONSE);
             this.messageHistory.pushAssistantCallMessage(this.currentMessageId, stop.name, stop.arguments);
         }
 
@@ -130,6 +138,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         var authMethod = vscode.workspace.getConfiguration("chatgpt-vscode").get("method");
 
         var apiKey = vscode.workspace.getConfiguration("chatgpt-vscode").get("apiKey") as string;
+        if (apiKey.length === 0) {
+            vscode.window.showErrorMessage("");
+        }
         switch (authMethod) {
             case "OpenAI":
                 var baseUrl = vscode.workspace.getConfiguration("chatgpt-vscode").get("apiBaseUrl") as string;
