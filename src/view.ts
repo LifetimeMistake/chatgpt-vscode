@@ -110,7 +110,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             this.messageHistory.pushAssistantMessage(this.currentMessageId, stop.content);
             this.sendMessage(ASSISTANT_STOP_RESPONSE, { id: this.currentMessageId });
         } else if (stop instanceof ErrorStop) {
-            this.sendMessage(ASSISTANT_ERROR_RESPONSE, stop.error);
+            this.sendMessage(ASSISTANT_ERROR_RESPONSE, stop.message);
         } else if (stop instanceof FunctionCallStop) {
             this.messageHistory.pushAssistantCallMessage(this.currentMessageId, stop.name, stop.arguments);
         }

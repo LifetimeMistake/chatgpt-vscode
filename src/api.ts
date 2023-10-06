@@ -116,10 +116,12 @@ export class FunctionCallStop {
 }
 
 export class ErrorStop {
-    error: any;
+    message: string;
+    context?: any;
 
-    constructor(error: any) {
-        this.error = error;
+    constructor(message: string, context?: any) {
+        this.message = message;
+        this.context = context;
     }
 }
 
@@ -177,78 +179,70 @@ export class GPTRequestManager {
         this._functionBuffer = [];
     }
 
-    private finishStop(): MessageStop {
-        const content = this.content;
-        this.reset(false);
-        return new MessageStop(content);
-    }
-
-    private finishFunction(): FunctionCallStop {
-        const name = this._functionName;
-        const args = this._functionBuffer.join("");
-        this.reset(false);
-        return new FunctionCallStop(name, args);
-    }
-
-    private finishError(error: any): ErrorStop {
-        this.reset(true);
-        return new ErrorStop(error);
-    }
-
     async runRequest(req: OpenAIRequest): Promise<MessageStop | FunctionCallStop | ErrorStop> {
         if (this._inProgress) {
             return new ErrorStop("Another request is already in progress.");
         }
 
+        var isErr = false;
         this.reset(false);
-        this._stream = await this._client.chat.completions.create(req.toObject());
-        this._inProgress = true;
+        try {
+            this._stream = await this._client.chat.completions.create(req.toObject());
+            this._inProgress = true;
 
-        for await (const part of (this._stream as any)) {
-            if (!this._inProgress) {
-                return this.finishError("Request aborted");
-            }
-
-            if (part.choices.len === 0) {
-                return this.finishError("OpenAI API returned invalid data");
-            }
-
-            const data = part.choices[0];
-            if (data.finish_reason === "stop") {
-                // Reached stop
-                return this.finishStop();
-            }
-            else if (data.finish_reason === "function_call") {
-                // Reached end of function call stream
-                if (!this._callInProgress) {
-                    return this.finishError("Function call stop reached but no function call stream was in progress");
+            for await (const part of (this._stream as any)) {
+                if (!this._inProgress) {
+                    throw new Error("Request aborted");
                 }
 
-                return this.finishFunction();
-            }
-            else if (data.finish_reason === null) {
-                // Regular update
-                const content = data.delta.content;
-                const func = data.delta.function_call;
+                if (part.choices.len === 0) {
+                    throw new Error("OpenAI API returned invalid data");
+                }
 
-                if (content) {
-                    // Receive content delta
-                    this._contentBuffer.push(content);
-                    this._eventEmitter.emit(CONTENT_RECEIVED_EVENT, content);
-                } else if (func) {
+                const data = part.choices[0];
+                if (data.finish_reason === "stop") {
+                    // Reached stop
+                    return new MessageStop(this.content);
+                }
+                else if (data.finish_reason === "function_call") {
+                    // Reached end of function call stream
                     if (!this._callInProgress) {
-                        // Receive function header
-                        this._functionName = func.name;
-                        this._callInProgress = true;
-                        this._eventEmitter.emit(FUNCTION_CALL_STARTED_EVENT, func.name);
+                        throw new Error("Function call stop reached but no function call stream was in progress");
                     }
 
-                    if (func.arguments) {
-                        // Receive function param delta
-                        this._functionBuffer.push(func.arguments);
+                    return new FunctionCallStop(this._functionName, this._functionBuffer.join(""));
+                }
+                else if (data.finish_reason === null) {
+                    // Regular update
+                    const content = data.delta.content;
+                    const func = data.delta.function_call;
+
+                    if (content) {
+                        // Receive content delta
+                        this._contentBuffer.push(content);
+                        this._eventEmitter.emit(CONTENT_RECEIVED_EVENT, content);
+                    } else if (func) {
+                        if (!this._callInProgress) {
+                            // Receive function header
+                            this._functionName = func.name;
+                            this._callInProgress = true;
+                            this._eventEmitter.emit(FUNCTION_CALL_STARTED_EVENT, func.name);
+                        }
+
+                        if (func.arguments) {
+                            // Receive function param delta
+                            this._functionBuffer.push(func.arguments);
+                        }
                     }
                 }
             }
+        }
+        catch (err) {
+            isErr = true;
+            return new ErrorStop(err.message, err);
+        }
+        finally {
+            this.reset(isErr);
         }
     }
 

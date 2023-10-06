@@ -60,7 +60,7 @@ ExtensionMessenger.addMessageHandler(ASSISTANT_CALL_RESPONSE, () => {
 });
 
 ExtensionMessenger.addMessageHandler(ASSISTANT_ERROR_RESPONSE, (data) => {
-    ChatManager.createErrorPrompt(data.error);
+    ChatManager.createErrorPrompt(data);
 });
 
 class ChatManager {
