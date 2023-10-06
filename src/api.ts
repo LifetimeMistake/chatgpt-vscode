@@ -192,7 +192,7 @@ export class GPTRequestManager {
 
             for await (const part of (this._stream as any)) {
                 if (!this._inProgress) {
-                    throw new Error("Request aborted");
+                    break;
                 }
 
                 if (part.choices.len === 0) {
@@ -235,6 +235,12 @@ export class GPTRequestManager {
                         }
                     }
                 }
+            }
+
+            if (!this._inProgress) {
+                throw new Error("Request aborted");
+            } else {
+                throw new Error("Request interrupted");
             }
         }
         catch (err) {
