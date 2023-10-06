@@ -17,12 +17,17 @@ const USER_PROMPT_REQUEST = 'userPromptRequest';
 const USER_EDIT_REQUEST = 'userEditRequest';
 const OPEN_SETTINGS_REQUEST = 'openSettingsRequest';
 const NEW_CHAT_REQUEST = 'newChatRequest';
+const USER_ABORT_REQUEST = 'userAbortRequest';
 
 const USER_PROMPT_RESPONSE = 'userPromptResponse';
 const ASSISTANT_TOKEN_RESPONSE = 'assistantTokenResponse';
 const ASSISTANT_STOP_RESPONSE = 'assistantStopResponse';
 const ASSISTANT_CALL_RESPONSE = 'assistantCallResponse';
 const ASSISTANT_ERROR_RESPONSE = 'assistantErrorResponse';
+
+const CHANGE_NAME_RESPONSE = 'changeNameResponse';
+
+var assistantName = "GPT";
 
 class ExtensionMessenger {
     static sendMessage(type, data) {
@@ -52,29 +57,41 @@ ExtensionMessenger.addMessageHandler(ASSISTANT_TOKEN_RESPONSE, (data) => {
 });
 
 ExtensionMessenger.addMessageHandler(ASSISTANT_STOP_RESPONSE, (data) => {
-    ChatManager.readyAssistantPrompt(data.id);
+    ChatManager.readyAssistantPrompt(data);
 });
 
-ExtensionMessenger.addMessageHandler(ASSISTANT_CALL_RESPONSE, () => {
-
+ExtensionMessenger.addMessageHandler(ASSISTANT_CALL_RESPONSE, (data) => {
+    ChatManager.createCallPrompt(data);
 });
 
 ExtensionMessenger.addMessageHandler(ASSISTANT_ERROR_RESPONSE, (data) => {
     ChatManager.createErrorPrompt(data);
 });
 
+ExtensionMessenger.addMessageHandler(CHANGE_NAME_RESPONSE, (data) => {
+    ChatManager.changeName(data);
+});
+
 class ChatManager {
     static prompts = [];
     static waitingForAssistant = false;
     static isEditingPrompt = false;
+    static isCallingFunction = false;
     static promptLanguage = "";
 
     static async createUserPrompt(id, content) {
+        var isScrolledMax = this.isScrolledMax();
+        console.log(isScrolledMax);
         const promptElement = document.createElement('div');
         promptElement.className = 'bg-neutral-700 p-5';
         promptElement.id = `promptDiv-${id}`;
         promptElement.innerHTML = `<div class="flex flex-row justify-between">
-                    <h2 class="text-lg font-semibold">You</h2>
+                    <div class="flex flex-row space-x-3 mb-5">
+                    <span class="material-symbols-outlined w-8 h-8 pt-0.5 text-center align-middle">
+                    person
+                    </span>
+                    <h2 class="assistant-name text-lg font-semibold">You</h2>
+                    </div>
                     <div>
                         <button id="editPrompt-${id}" class="w-6"><span
                                 class="material-symbols-outlined text-base w-6 hover:bg-neutral-600 rounded-md">edit</span></button>
@@ -95,11 +112,10 @@ class ChatManager {
                         <span class="">Cancel</span></button>
                 </div>
                 <textarea id="editArea-${id}" class="bg-neutral-800 overflow-y-auto resize-none p-3 w-full mt-3 hidden"></textarea>
-                <p id="prompt-${id}" class="mt-5 break-words text-start">${content}</p>`;
+                <p id="prompt-${id}" class="break-words text-start">${content}</p>`;
         document.getElementById('chat').appendChild(promptElement);
         this.prompts.push({ id: id, type: chatEnum.user, content: content });
 
-        this.scrollToBottom();
         this.toggleState();
 
         document.getElementById(`editPrompt-${id}`).addEventListener("click", () => {
@@ -113,35 +129,67 @@ class ChatManager {
         document.getElementById(`cancelEdit-${id}`).addEventListener("click", () => {
             this.cancelEdit(id);
         });
+        if (isScrolledMax) {
+            document.getElementById('main-panel').scrollTop += 9999;
+        }
     }
 
     static createAssistantPrompt(id) {
+        var isScrolledMax = this.isScrolledMax();
+        const callElement = document.getElementById('functionCall');
+        if (callElement) { callElement.remove(); }
+
         const promptElement = document.createElement('div');
         promptElement.className = 'bg-neutral-900 p-5';
         promptElement.innerHTML = `<div class="flex flex-row space-x-3 mb-5">
-                    <img class="w-8 bg-neutral-800"
-                        src="">
-                    <h2 class="text-lg font-bold">GPT</h2>
+                    <span class="material-symbols-outlined w-8 h-8 pt-0.5 text-center align-middle">
+                    psychology
+                    </span>
+                    <h2 class="assistant-name text-lg font-bold">${assistantName}</h2>
                 </div>
                 <div id="prompt-${id}" class="assistant-prompt break-words text-start relative"></div>`;
         document.getElementById('chat').appendChild(promptElement);
         var prompt = { id: id, type: chatEnum.assistant, content: "" };
         this.prompts.push(prompt);
+        if (isScrolledMax) {
+            document.getElementById('main-panel').scrollTop += 9999;
+        }
         return prompt;
     }
 
+    static createCallPrompt(content) {
+        var isScrolledMax = this.isScrolledMax();
+        const callElement = document.getElementById('functionCall');
+        if (callElement) { callElement.remove(); }
+        const promptElement = document.createElement('div');
+        promptElement.className = 'bg-neutral-800 p-5';
+        promptElement.id = 'functionCall';
+
+        var markedCall = marked.parse(`\`\`\`${content}\`\`\``);
+
+        promptElement.innerHTML = `<p class="text-base">${markedCall}</p>`;
+        document.getElementById('chat').appendChild(promptElement);
+        if (isScrolledMax) {
+            document.getElementById('main-panel').scrollTop += 9999;
+        }
+    }
+
     static createErrorPrompt(error) {
+        var isScrolledMax = this.isScrolledMax();
         const promptElement = document.createElement('div');
         promptElement.className = 'bg-neutral-900 p-5';
         promptElement.innerHTML = `<div class="flex flex-row space-x-3 mb-5">
-                    <img class="w-8 bg-neutral-800"
-                        src="">
-                    <h2 class="text-lg font-bold">GPT</h2>
+                    <span class="material-symbols-outlined w-8 h-8 pt-0.5 text-center align-middle">
+                    psychology
+                    </span>
+                    <h2 class="assistant-name text-lg font-bold">${assistantName}</h2>
                 </div>
                 <div class="assistant-prompt break-words text-start relative text-base text-red-800">${error}</div>`;
         document.getElementById('chat').appendChild(promptElement);
         this.toggleState();
-        return prompt;
+        if (isScrolledMax) {
+            document.getElementById('main-panel').scrollTop += 9999;
+        }
     }
 
     static editPrompt(id) {
@@ -204,6 +252,11 @@ class ChatManager {
     }
 
     static appendToken(id, token) {
+        var isScrolledMax = this.isScrolledMax();
+        if (this.isCallingFunction) {
+            document.getElementById('thinking').innerHTML = `Thinking . . .`;
+        }
+
         var prompt = this.prompts.find(m => m.id === id);
         if (!prompt) {
             prompt = this.createAssistantPrompt(id);
@@ -249,22 +302,19 @@ class ChatManager {
         updatedValue = "<p>" + wrappedCodeBlocks.join('\n') + "</p>";
         let markedResponse = marked.parse(updatedValue);
 
-
-        //const markedResponse = marked.parse(updatedValue);
         const parser = new DOMParser();
         const htmlDoc = parser.parseFromString(markedResponse, 'text/html');
-        htmlDoc.querySelectorAll('pre').forEach(preElement => {
-            preElement.classList.add('pre-code-element', 'relative');
-        });
-        htmlDoc.querySelectorAll('code').forEach(codeElement => {
-            //codeElement.classList.add('input-background', 'p-4', 'pb-2', 'block', 'whitespace-pre', 'overflow-x-scroll');
-        });
 
         const updatedMarkedResponse = htmlDoc.documentElement.innerHTML;
         existingMessage.innerHTML = updatedMarkedResponse;
+
+        if (isScrolledMax) {
+            document.getElementById('main-panel').scrollTop += 9999;
+        }
     }
 
     static readyAssistantPrompt(id) {
+        var isScrolledMax = this.isScrolledMax();
         var codeBlocks = document.getElementById(`prompt-${id}`).getElementsByTagName("pre");
 
         for (var i = 0; i < codeBlocks.length; i++) {
@@ -275,16 +325,25 @@ class ChatManager {
             codeBlock.parentNode.insertBefore(preWrap, codeBlock);
 
             preWrap.classList.add("mb-5");
-            preWrap.innerHTML = `<div class="bg-neutral-600 p-0.5 flex flex-row justify-end">
-                        <button id="copy-${id}" class="hover:bg-neutral-500 w-7 h-7 text-center rounded-md"><span
-                                class="material-symbols-outlined text-lg text-center">
+            preWrap.innerHTML = `<div class="bg-neutral-800 p-1 h-8 flex flex-row justify-end">
+                        <button id="copy-${id}" class="hover:bg-neutral-500 w-6 h-6 text-center rounded-md"><span
+                                class="material-symbols-outlined text-lg text-center w-6 h-6 align-middle">
                                 content_copy
                             </span></button>
                     </div>`;
             codeBlock.parentElement.removeChild(codeBlock);
             preWrap.appendChild(codeBlock);
+
+            document.getElementById(`copy-${id}`).addEventListener("click", () => {
+                var codeContent = codeBlock.textContent;
+                navigator.clipboard.writeText(codeContent);
+            });
         }
+
         this.toggleState();
+        if (isScrolledMax) {
+            document.getElementById('main-panel').scrollTop += 9999;
+        }
     }
 
 
@@ -301,6 +360,29 @@ class ChatManager {
     static toggleState() {
         this.waitingForAssistant = !this.waitingForAssistant;
         document.getElementById('thinking').classList.toggle("hidden");
+        document.getElementById('stopButton').classList.toggle("hidden");
+    }
+
+    static changeName(name) {
+        assistantName = name;
+        var nameElements = document.getElementsByClassName('assistant-name');
+        for (var i = 0; i < nameElements.length; i++) {
+            nameElements[i].innerHTML = name;
+        }
+    }
+
+    static isScrolledMax() {
+        var currentScroll = document.getElementById('main-panel').scrollTop;
+        console.log(currentScroll);
+        document.getElementById('main-panel').scrollTop += 9999;
+        var maxScroll = document.getElementById('main-panel').scrollTop;
+        console.log(maxScroll);
+
+        if (currentScroll === maxScroll) {
+            return true;
+        }
+        document.getElementById('main-panel').scrollTop = currentScroll;
+        return false;
     }
 }
 
@@ -316,13 +398,15 @@ function sendPrompt() {
     document.getElementById('chat').classList.remove('hidden');
     document.getElementById('introduction').classList.add('hidden');
     inputArea.value = "";
+    ChatManager.scrollToBottom();
 }
 
 document.getElementById('input-area').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !ChatManager.waitingForAssistant) {
-        if (e.shiftKey) { return; }
+    if (e.key === 'Enter' && !e.shiftKey) {
+        if (!ChatManager.waitingForAssistant) {
+            sendPrompt();
+        }
         e.preventDefault();
-        sendPrompt();
     }
 });
 
@@ -352,6 +436,12 @@ document.getElementById('newchat-button').addEventListener('click', () => {
 document.getElementById('settings-button').addEventListener('click', () => {
     document.querySelector("#options-list").classList.toggle("hidden");
     ExtensionMessenger.sendMessage(OPEN_SETTINGS_REQUEST);
+});
+
+document.getElementById('stopButton').addEventListener('click', () => {
+    if (ChatManager.waitingForAssistant) {
+        ExtensionMessenger.sendMessage(USER_ABORT_REQUEST);
+    }
 });
 
 document.addEventListener('mouseup', (e) => {
