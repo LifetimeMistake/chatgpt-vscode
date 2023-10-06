@@ -1,8 +1,22 @@
 const vscode = acquireVsCodeApi();
+marked.setOptions({
+    renderer: new marked.Renderer(),
+    highlight: function (code, _lang) {
+        return hljs.highlightAuto(code).value;
+    },
+    langPrefix: 'hljs language-',
+    pedantic: false,
+    gfm: true,
+    breaks: true,
+    sanitize: false,
+    smartypants: false,
+    xhtml: false
+});
 
 const USER_PROMPT_REQUEST = 'userPromptRequest';
 const USER_EDIT_REQUEST = 'userEditRequest';
 const OPEN_SETTINGS_REQUEST = 'openSettingsRequest';
+const NEW_CHAT_REQUEST = 'newChatRequest';
 
 const USER_PROMPT_RESPONSE = 'userPromptResponse';
 const ASSISTANT_TOKEN_RESPONSE = 'assistantTokenResponse';
@@ -30,31 +44,32 @@ class ExtensionMessenger {
 }
 
 ExtensionMessenger.addMessageHandler(USER_PROMPT_RESPONSE, (data) => {
-    ChatManager.appendUserPrompt(data.id, data.content);
+    ChatManager.createUserPrompt(data.id, data.content);
 });
 
 ExtensionMessenger.addMessageHandler(ASSISTANT_TOKEN_RESPONSE, (data) => {
     ChatManager.appendToken(data.id, data.content);
 });
 
-ExtensionMessenger.addMessageHandler(ASSISTANT_STOP_RESPONSE, () => {
-    ChatManager.readyAssistantPrompt();
+ExtensionMessenger.addMessageHandler(ASSISTANT_STOP_RESPONSE, (data) => {
+    ChatManager.readyAssistantPrompt(data.id);
 });
 
 ExtensionMessenger.addMessageHandler(ASSISTANT_CALL_RESPONSE, () => {
 
 });
 
-ExtensionMessenger.addMessageHandler(ASSISTANT_ERROR_RESPONSE, () => {
-
+ExtensionMessenger.addMessageHandler(ASSISTANT_ERROR_RESPONSE, (data) => {
+    ChatManager.createErrorPrompt(data.error);
 });
 
 class ChatManager {
     static prompts = [];
     static waitingForAssistant = false;
     static isEditingPrompt = false;
+    static promptLanguage = "";
 
-    static async appendUserPrompt(id, content) {
+    static async createUserPrompt(id, content) {
         const promptElement = document.createElement('div');
         promptElement.className = 'bg-neutral-700 p-5';
         promptElement.id = `promptDiv-${id}`;
@@ -80,12 +95,12 @@ class ChatManager {
                         <span class="">Cancel</span></button>
                 </div>
                 <textarea id="editArea-${id}" class="bg-neutral-800 overflow-y-auto resize-none p-3 w-full mt-3 hidden"></textarea>
-                <p id="prompt-${id}" class="mt-5 break-words">${content}</p>`;
+                <p id="prompt-${id}" class="mt-5 break-words text-start">${content}</p>`;
         document.getElementById('chat').appendChild(promptElement);
         this.prompts.push({ id: id, type: chatEnum.user, content: content });
 
         this.scrollToBottom();
-        this.waitingForAssistant = true;
+        this.toggleState();
 
         document.getElementById(`editPrompt-${id}`).addEventListener("click", () => {
             this.editPrompt(id);
@@ -103,19 +118,34 @@ class ChatManager {
     static createAssistantPrompt(id) {
         const promptElement = document.createElement('div');
         promptElement.className = 'bg-neutral-900 p-5';
-        promptElement.innerHTML = ` <div class="flex flex-row space-x-3">
-                                    <img class="w-8" src="https://cuddlyoctopus.com/wp-content/uploads/2019/11/KI-032A-Astolfo-750x750.png">
-                                    <h2 class="text-lg font-bold">GPT</h2>
-                                    </div>
-                                    <p id="prompt-${id}" class="mt-5 break-words"></p>`;
+        promptElement.innerHTML = `<div class="flex flex-row space-x-3 mb-5">
+                    <img class="w-8 bg-neutral-800"
+                        src="">
+                    <h2 class="text-lg font-bold">GPT</h2>
+                </div>
+                <div id="prompt-${id}" class="assistant-prompt break-words text-start relative"></div>`;
         document.getElementById('chat').appendChild(promptElement);
         var prompt = { id: id, type: chatEnum.assistant, content: "" };
         this.prompts.push(prompt);
         return prompt;
     }
 
+    static createErrorPrompt(error) {
+        const promptElement = document.createElement('div');
+        promptElement.className = 'bg-neutral-900 p-5';
+        promptElement.innerHTML = `<div class="flex flex-row space-x-3 mb-5">
+                    <img class="w-8 bg-neutral-800"
+                        src="">
+                    <h2 class="text-lg font-bold">GPT</h2>
+                </div>
+                <div class="assistant-prompt break-words text-start relative text-base text-red-800">${error}</div>`;
+        document.getElementById('chat').appendChild(promptElement);
+        this.toggleState();
+        return prompt;
+    }
+
     static editPrompt(id) {
-        if (this.waitingForAssistant) {
+        if (this.waitingForAssistant || this.isEditingPrompt) {
             return;
         }
 
@@ -158,6 +188,8 @@ class ChatManager {
             nextSibling = promptDiv.nextSibling;
         }
 
+        this.isEditingPrompt = false;
+        this.toggleState();
         ExtensionMessenger.sendMessage(USER_EDIT_REQUEST, { id: id, content: editArea.value });
     }
 
@@ -168,6 +200,7 @@ class ChatManager {
 
         var prompt = document.getElementById(`prompt-${id}`);
         prompt.classList.remove("hidden");
+        this.isEditingPrompt = false;
     }
 
     static appendToken(id, token) {
@@ -176,15 +209,84 @@ class ChatManager {
             prompt = this.createAssistantPrompt(id);
         }
 
-        const promptElement = document.getElementById(`prompt-${id}`);
-        promptElement.innerHTML += token;
-        prompt.content = promptElement.innerHTML;
-        this.scrollToBottom();
+        prompt.content += token;
+        console.log(token);
+
+        let existingMessage = document.getElementById(`prompt-${id}`);
+        let updatedValue = "";
+        let rawValue = "";
+
+        rawValue = prompt.content;
+        updatedValue = rawValue.split("```").length % 2 === 1 ? rawValue : rawValue + "\n\n```\n\n";
+        updatedValue = updatedValue.replace(/`([^`]{1})`/g, `<code class="hljs language-${this.promptLanguage}">$1</code>`);
+
+        let inCodeBlock = false;
+        const lines = updatedValue.split("\n");
+        const wrappedCodeBlocks = [];
+
+        for (var line of lines) {
+            const match = /^```(.*)$/.exec(line);
+
+            if (match) {
+                inCodeBlock = !inCodeBlock;
+                if (inCodeBlock) {
+                    this.promptLanguage = match[1]; // Save the language
+                } else if (wrappedCodeBlocks.length > 0) {
+                    wrappedCodeBlocks.push("</p>\n\n<p>");
+                }
+            } else {
+                if (inCodeBlock) {
+                    line = "    " + line;
+                }
+                wrappedCodeBlocks.push(line);
+            }
+        }
+
+        if (inCodeBlock) {
+            wrappedCodeBlocks.push("</p>");
+        }
+
+        updatedValue = "<p>" + wrappedCodeBlocks.join('\n') + "</p>";
+        let markedResponse = marked.parse(updatedValue);
+
+
+        //const markedResponse = marked.parse(updatedValue);
+        const parser = new DOMParser();
+        const htmlDoc = parser.parseFromString(markedResponse, 'text/html');
+        htmlDoc.querySelectorAll('pre').forEach(preElement => {
+            preElement.classList.add('pre-code-element', 'relative');
+        });
+        htmlDoc.querySelectorAll('code').forEach(codeElement => {
+            //codeElement.classList.add('input-background', 'p-4', 'pb-2', 'block', 'whitespace-pre', 'overflow-x-scroll');
+        });
+
+        const updatedMarkedResponse = htmlDoc.documentElement.innerHTML;
+        existingMessage.innerHTML = updatedMarkedResponse;
     }
 
-    static readyAssistantPrompt() {
-        this.waitingForAssistant = false;
+    static readyAssistantPrompt(id) {
+        var codeBlocks = document.getElementById(`prompt-${id}`).getElementsByTagName("pre");
+
+        for (var i = 0; i < codeBlocks.length; i++) {
+            var codeBlock = codeBlocks[i];
+            var preWrap = document.createElement('div');
+
+            // Insert preWrap before codeBlock
+            codeBlock.parentNode.insertBefore(preWrap, codeBlock);
+
+            preWrap.classList.add("mb-5");
+            preWrap.innerHTML = `<div class="bg-neutral-600 p-0.5 flex flex-row justify-end">
+                        <button id="copy-${id}" class="hover:bg-neutral-500 w-7 h-7 text-center rounded-md"><span
+                                class="material-symbols-outlined text-lg text-center">
+                                content_copy
+                            </span></button>
+                    </div>`;
+            codeBlock.parentElement.removeChild(codeBlock);
+            preWrap.appendChild(codeBlock);
+        }
+        this.toggleState();
     }
+
 
     static clearMessages() {
         this.prompts = [];
@@ -194,6 +296,11 @@ class ChatManager {
     static scrollToBottom() {
         const mainPanel = document.getElementById("main-panel");
         mainPanel.scrollTop = mainPanel.scrollHeight;
+    }
+
+    static toggleState() {
+        this.waitingForAssistant = !this.waitingForAssistant;
+        document.getElementById('thinking').classList.toggle("hidden");
     }
 }
 
@@ -213,6 +320,7 @@ function sendPrompt() {
 
 document.getElementById('input-area').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !ChatManager.waitingForAssistant) {
+        if (e.shiftKey) { return; }
         e.preventDefault();
         sendPrompt();
     }
@@ -230,11 +338,15 @@ document.getElementById('options-button').addEventListener('click', () => {
 });
 
 document.getElementById('newchat-button').addEventListener('click', () => {
+    if (ChatManager.waitingForAssistant) {
+        return;
+    }
+
     ChatManager.clearMessages();
     document.getElementById('chat').classList.add('hidden');
     document.getElementById('introduction').classList.remove('hidden');
     document.querySelector("#options-list").classList.toggle("hidden");
-    ExtensionMessenger.test();
+    ExtensionMessenger.sendMessage(NEW_CHAT_REQUEST);
 });
 
 document.getElementById('settings-button').addEventListener('click', () => {

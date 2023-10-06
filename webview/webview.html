@@ -6,48 +6,180 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" data-license="isc-gnc">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    <style type="text/tailwindcss">
+        @layer utilities {
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                padding: 0 !important;
+            }
+
+            pre {
+                padding: 1rem;
+                border: 1px solid rgb(58, 58, 58);
+                overflow-x: auto;
+            }
+
+            .assistant-prompt>p {
+                margin-bottom: 1.25rem;
+            }
         }
     </style>
+    <style>
+        .hljs {
+            background-color: rgb(23 23 23) !important;
+        }
+
+        .hljs {
+            color: #c9d1d9;
+            background: #0d1117 !important;
+        }
+
+        .hljs-doctag,
+        .hljs-keyword,
+        .hljs-meta .hljs-keyword,
+        .hljs-template-tag,
+        .hljs-template-variable,
+        .hljs-type,
+        .hljs-variable.language_ {
+            /* prettylights-syntax-keyword */
+            color: #ff7b72 !important;
+        }
+
+        .hljs-title,
+        .hljs-title.class_,
+        .hljs-title.class_.inherited__,
+        .hljs-title.function_ {
+            /* prettylights-syntax-entity */
+            color: #d2a8ff !important;
+        }
+
+        .hljs-attr,
+        .hljs-attribute,
+        .hljs-literal,
+        .hljs-meta,
+        .hljs-number,
+        .hljs-operator,
+        .hljs-variable,
+        .hljs-selector-attr,
+        .hljs-selector-class,
+        .hljs-selector-id {
+            /* prettylights-syntax-constant */
+            color: #79c0ff !important;
+        }
+
+        .hljs-regexp,
+        .hljs-string,
+        .hljs-meta .hljs-string {
+            /* prettylights-syntax-string */
+            color: #a5d6ff !important;
+        }
+
+        .hljs-built_in,
+        .hljs-symbol {
+            /* prettylights-syntax-variable */
+            color: #ffa657 !important;
+        }
+
+        .hljs-comment,
+        .hljs-code,
+        .hljs-formula {
+            /* prettylights-syntax-comment */
+            color: #8b949e !important;
+        }
+
+        .hljs-name,
+        .hljs-quote,
+        .hljs-selector-tag,
+        .hljs-selector-pseudo {
+            /* prettylights-syntax-entity-tag */
+            color: #7ee787 !important;
+        }
+
+        .hljs-subst {
+            /* prettylights-syntax-storage-modifier-import */
+            color: #c9d1d9 !important;
+        }
+
+        .hljs-section {
+            /* prettylights-syntax-markup-heading */
+            color: #1f6feb !important;
+            font-weight: bold !important;
+        }
+
+        .hljs-bullet {
+            /* prettylights-syntax-markup-list */
+            color: #f2cc60 !important;
+        }
+
+        .hljs-emphasis {
+            /* prettylights-syntax-markup-italic */
+            color: #c9d1d9 !important;
+            font-style: italic !important;
+        }
+
+        .hljs-strong {
+            /* prettylights-syntax-markup-bold */
+            color: #c9d1d9 !important;
+            font-weight: bold !important;
+        }
+
+        .hljs-addition {
+            /* prettylights-syntax-markup-inserted */
+            color: #aff5b4 !important;
+            background-color: #033a16 !important;
+        }
+
+        .hljs-deletion {
+            /* prettylights-syntax-markup-deleted */
+            color: #ffdcd7 !important;
+            background-color: #67060c !important;
+        }
+
+        .hljs-char.escape_,
+        .hljs-link,
+        .hljs-params,
+        .hljs-property,
+        .hljs-punctuation,
+        .hljs-tag {
+            /* purposely ignored */
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.4.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
 </head>
 
 <body class="h-screen w-screen flex flex-col bg-neutral-900">
     <div id="main-panel" class="bg-neutral-900 flex-grow overflow-y-auto">
         <div id="introduction" class="">
-            <img class="w-64 mx-auto mt-10"
-                src="https://cuddlyoctopus.com/wp-content/uploads/2019/11/KI-032A-Astolfo-750x750.png">
-            <h1 class="text-3xl mx-auto mt-1 w-max font-bold text-white">GPT for VSCode</h1>
+            <h1 class="text-xl mx-auto mt-32 w-max font-bold text-white">GPT for VSCode</h1>
             <p class="mx-auto w-max mt-3">Your coding assistant</p>
-            <div class="flex flex-col space-y-10 mt-10 mx-10 w-auto items-center">
-                <p class="p-2 border-4 border-neutral-500 rounded-md w-full text-center">Advanced Pegging Support
-                </p>
-                <p class="p-2 border-4 border-neutral-500 rounded-md w-full text-center">Trans and Femboy
-                    Compatibility
-                </p>
-                <p class="p-2 border-4 border-neutral-500 rounded-md w-full text-center">Suck, Squeeze, Bang and
-                    Blow
-                    Functionality</p>
-                <p class="p-2 border-4 border-neutral-500 rounded-md w-full text-center">I hate front-end so much
-                    help
-                    me
-                </p>
+            <div class="flex flex-col space-y-5 mt-10 mx-10 w-auto items-center">
+                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">1</p>
+                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">2</p>
+                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">3</p>
+                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">4</p>
             </div>
         </div>
         <div id="chat" class="hidden">
         </div>
     </div>
-    <div id="input-panel" class="bg-neutral-700 flex flex-row mx-3 mb-5 h-9 justify-center">
+    <div id="input-panel" class="bg-neutral-700 flex flex-row m-3 h-9 justify-center relative">
+        <div>
+            <h2 id="thinking" class="absolute -top-6 text-sm hidden">Thinking . . .</h2>
+        </div>
         <textarea id="input-area"
             class="bg-neutral-700 placeholder:text-neutral-400 text-sm overflow-y-auto resize-none p-2 flex-grow"
             placeholder="Ask a question..."></textarea>
         <div class="flex px-1 justify-center relative">
-            <ul id="options-list" class="absolute bg-neutral-600 -top-16 -left-28 w-max shadow-xl hidden">
+            <ul id="options-list" class="absolute bg-neutral-600 -top-20 -right-9 w-max shadow-xl hidden">
                 <li>
                     <button id="newchat-button"
                         class="hover:bg-neutral-500 p-2 w-full flex flex-row justify-between items-center">
@@ -93,6 +225,7 @@
             <span>Stop responding</span>
         </button>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.2/dist/markdown-it.min.js "></script>
     <script id="mainJs" src=""></script>
 </body>
 
