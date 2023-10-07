@@ -31,128 +31,13 @@
             .assistant-prompt>ul {
                 margin-bottom: 1.25rem;
             }
+
+            .assistant-prompt>ul>li {
+                margin-bottom: 0.25rem;
+            }
         }
     </style>
-    <style>
-        .hljs {
-            background-color: rgb(23 23 23) !important;
-        }
-
-        .hljs {
-            color: #c9d1d9;
-            background: #0d1117 !important;
-        }
-
-        .hljs-doctag,
-        .hljs-keyword,
-        .hljs-meta .hljs-keyword,
-        .hljs-template-tag,
-        .hljs-template-variable,
-        .hljs-type,
-        .hljs-variable.language_ {
-            /* prettylights-syntax-keyword */
-            color: #ff7b72 !important;
-        }
-
-        .hljs-title,
-        .hljs-title.class_,
-        .hljs-title.class_.inherited__,
-        .hljs-title.function_ {
-            /* prettylights-syntax-entity */
-            color: #d2a8ff !important;
-        }
-
-        .hljs-attr,
-        .hljs-attribute,
-        .hljs-literal,
-        .hljs-meta,
-        .hljs-number,
-        .hljs-operator,
-        .hljs-variable,
-        .hljs-selector-attr,
-        .hljs-selector-class,
-        .hljs-selector-id {
-            /* prettylights-syntax-constant */
-            color: #79c0ff !important;
-        }
-
-        .hljs-regexp,
-        .hljs-string,
-        .hljs-meta .hljs-string {
-            /* prettylights-syntax-string */
-            color: #a5d6ff !important;
-        }
-
-        .hljs-built_in,
-        .hljs-symbol {
-            /* prettylights-syntax-variable */
-            color: #ffa657 !important;
-        }
-
-        .hljs-comment,
-        .hljs-code,
-        .hljs-formula {
-            /* prettylights-syntax-comment */
-            color: #8b949e !important;
-        }
-
-        .hljs-name,
-        .hljs-quote,
-        .hljs-selector-tag,
-        .hljs-selector-pseudo {
-            /* prettylights-syntax-entity-tag */
-            color: #7ee787 !important;
-        }
-
-        .hljs-subst {
-            /* prettylights-syntax-storage-modifier-import */
-            color: #c9d1d9 !important;
-        }
-
-        .hljs-section {
-            /* prettylights-syntax-markup-heading */
-            color: #1f6feb !important;
-            font-weight: bold !important;
-        }
-
-        .hljs-bullet {
-            /* prettylights-syntax-markup-list */
-            color: #f2cc60 !important;
-        }
-
-        .hljs-emphasis {
-            /* prettylights-syntax-markup-italic */
-            color: #c9d1d9 !important;
-            font-style: italic !important;
-        }
-
-        .hljs-strong {
-            /* prettylights-syntax-markup-bold */
-            color: #c9d1d9 !important;
-            font-weight: bold !important;
-        }
-
-        .hljs-addition {
-            /* prettylights-syntax-markup-inserted */
-            color: #aff5b4 !important;
-            background-color: #033a16 !important;
-        }
-
-        .hljs-deletion {
-            /* prettylights-syntax-markup-deleted */
-            color: #ffdcd7 !important;
-            background-color: #67060c !important;
-        }
-
-        .hljs-char.escape_,
-        .hljs-link,
-        .hljs-params,
-        .hljs-property,
-        .hljs-punctuation,
-        .hljs-tag {
-            /* purposely ignored */
-        }
-    </style>
+    <link rel="stylesheet" href="{hljsCss}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.4.0.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
@@ -161,22 +46,23 @@
 </head>
 
 <body class="h-screen w-screen flex flex-col bg-neutral-900 overflow-x-hidden">
-    <div id="main-panel" class="bg-neutral-900 flex-grow overflow-y-auto">
+    <div id="main-panel" class="bg-neutral-900 flex-1 flex-shrink overflow-y-auto">
         <div id="introduction" class="">
             <h1 class="text-xl mx-auto mt-32 w-max font-bold text-white">GPT for VSCode</h1>
-            <p class="mx-auto w-max mt-3">Your coding assistant</p>
+            <p class="mx-auto w-max mt-3">Your virtual coding assistant</p>
             <div class="flex flex-col space-y-5 mt-10 mx-10 w-auto items-center">
-                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">1</p>
-                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">2</p>
-                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">3</p>
-                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">4</p>
+                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">Pre-defined quick prompt commands
+                </p>
+                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">Prompt prefix customizability</p>
+                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">Exposed extension API</p>
+                <p class="p-2 border border-neutral-700 rounded-md w-full text-center">TS functions injection</p>
             </div>
         </div>
         <div id="chat" class="hidden">
         </div>
     </div>
     <h2 id="thinking" class="text-sm p-2 w-screen bg-neutral-900 hidden">Thinking . . .</h2>
-    <div id="input-panel" class="bg-neutral-700 flex flex-row m-3 h-9 justify-center relative">
+    <div id="input-panel" class="bg-neutral-700 flex flex-row m-3 h-9 max-h-64 justify-center relative">
         <textarea id="input-area"
             class="bg-neutral-700 placeholder:text-neutral-400 text-sm overflow-y-auto resize-none p-2 flex-grow"
             placeholder="Ask a question..."></textarea>
@@ -205,16 +91,14 @@
                 </li>
             </ul>
             <button id="options-button" class="mx-auto my-auto group">
-                <span
-                    class="material-symbols-outlined p-0.5 rounded-md group-hover:bg-neutral-600 transition-all duration-300 ease-out">
+                <span class="material-symbols-outlined p-0.5 rounded-md group-hover:bg-neutral-600 mt-0.5">
                     more_vert
                 </span></i>
             </button>
         </div>
         <div class="flex px-1 justify-center">
             <button id="send-button" class="mx-auto my-auto group">
-                <span
-                    class="material-symbols-outlined p-0.5 rounded-md group-hover:bg-neutral-600 transition-all duration-300 ease-out">
+                <span class="material-symbols-outlined p-0.5 rounded-md group-hover:bg-neutral-600 mt-0.5">
                     send
                 </span></i>
             </button>

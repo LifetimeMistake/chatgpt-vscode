@@ -402,6 +402,7 @@ function sendPrompt() {
     document.getElementById('introduction').classList.add('hidden');
     inputArea.value = "";
     ChatManager.scrollToBottom();
+    inputPanel.style.height = initPanelHeight;
 }
 
 document.getElementById('input-area').addEventListener('keydown', (e) => {
@@ -452,6 +453,17 @@ document.addEventListener('mouseup', (e) => {
     const optionsButton = document.querySelector("#options-button");
     if (!optionsList.contains(e.target) && !optionsButton.contains(e.target)) {
         optionsList.classList.add('hidden');
+    }
+});
+
+const inputArea = document.getElementById('input-area');
+const inputPanel = document.getElementById('input-panel');
+const initPanelHeight = inputPanel.style.height;
+
+inputArea.addEventListener('input', () => {
+    inputPanel.style.height = `${inputArea.scrollHeight}px`;
+    if (inputArea.value === "") {
+        inputPanel.style.height = initPanelHeight;
     }
 });
 
