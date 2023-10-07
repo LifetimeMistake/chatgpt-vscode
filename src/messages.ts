@@ -49,7 +49,7 @@ export class UserMessage implements Message {
             mergedSystemMessages = "";
         }
 
-        content = `${mergedSystemMessages}#SYSTEM User query below\n\n${codeMessage}\n\n${this.content}`;
+        content = `${mergedSystemMessages}#SYSTEM User query below\n\n${this.content}\n\n${codeMessage}`;
 
         var message = {};
         message["role"] = "user";

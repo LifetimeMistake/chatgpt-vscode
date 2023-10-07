@@ -74,8 +74,12 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             enableScripts: true,
         };
         var mainJS = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionContext.extensionUri, 'webview', 'main.js'));
+        var hljsCSS = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionContext.extensionUri, 'webview', 'hljs.css'));
+        var tailwindCSS = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionContext.extensionUri, 'webview', 'tailwind.css'));
         var htmlContent: string = fs.readFileSync(vscode.Uri.joinPath(this.extensionContext.extensionUri, 'webview', 'webview.html').fsPath, 'utf-8');
         htmlContent = htmlContent.replace("{mainJs}", mainJS.toString());
+        htmlContent = htmlContent.replace("{hljsCss}", hljsCSS.toString());
+        htmlContent = htmlContent.replace("{tailwindCss}", tailwindCSS.toString());
         webview.html = htmlContent;
 
         Settings.onSettingChanged(SettingName.assistantName, () => {
@@ -389,4 +393,5 @@ export enum SettingName {
     promptPrefixProblems = "promptPrefix.findProblems",
     promptPrefixOptimize = "promptPrefix.optimize",
     promptPrefixRefactor = "promptPrefix.refactorCode",
+    promptPrefixCustom = "promptPrefix.customPrompt"
 }

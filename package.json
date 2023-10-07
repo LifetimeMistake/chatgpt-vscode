@@ -3,7 +3,7 @@
   "publisher": "lifetimemistake",
   "displayName": "GPT VSCode",
   "icon": "images/ai-logo.png",
-  "description": "An autonomous development plugin, GPT AI Copilot, powered by OpenAI.",
+  "description": "A VSCode extension integrating ChatGPT into the editor, powered by OpenAI",
   "version": "1.0.0",
   "aiKey": "",
   "repository": {
@@ -76,37 +76,37 @@
     "commands": [
       {
         "command": "chatgpt-vscode.refactorCode",
-        "title": "GPT: Refactor Code",
+        "title": "GPT VSCode: Refactor Code",
         "enablement": "editorHasSelection"
       },
       {
         "command": "chatgpt-vscode.findProblems",
-        "title": "GPT: Debug Code",
+        "title": "GPT VSCode: Debug Code",
         "enablement": "editorHasSelection"
       },
       {
         "command": "chatgpt-vscode.optimize",
-        "title": "GPT: Optimize Code",
+        "title": "GPT VSCode: Optimize Code",
         "enablement": "editorHasSelection"
       },
       {
         "command": "chatgpt-vscode.explain",
-        "title": "GPT: Explain Code",
+        "title": "GPT VSCode: Explain Code",
         "enablement": "editorHasSelection"
       },
       {
         "command": "chatgpt-vscode.addComments",
-        "title": "GPT: Add Comments",
+        "title": "GPT VSCode: Add Comments",
         "enablement": "editorHasSelection"
       },
       {
         "command": "chatgpt-vscode.completeCode",
-        "title": "GPT: Complete Code",
+        "title": "GPT VSCode: Complete Code",
         "enablement": "editorHasSelection"
       },
       {
         "command": "chatgpt-vscode.customPrompt",
-        "title": "GPT: Custom prompt",
+        "title": "GPT VSCode: Custom prompt",
         "enablement": "editorHasSelection"
       }
     ],
@@ -114,7 +114,7 @@
       "activitybar": [
         {
           "id": "vscode-chatgpt-view-container",
-          "title": "GPT",
+          "title": "GPT VSCode",
           "icon": "images/ai-logo-in.png"
         }
       ]
@@ -123,17 +123,17 @@
       "vscode-chatgpt-view-container": [
         {
           "type": "webview",
-          "id": "chatgpt-vscode.view2",
+          "id": "chatgpt-vscode.view",
           "name": "Chat window"
         }
       ]
     },
     "configuration": {
-      "title": "GPT",
+      "title": "GPT VSCode",
       "properties": {
         "chatgpt-vscode.assistantName": {
           "type": "string",
-          "default": "GPT",
+          "default": "GPT VSCode",
           "markdownDescription": "Custom name of the assistant"
         },
         "chatgpt-vscode.authMethod": {
@@ -170,7 +170,7 @@
             "2023-05-15",
             "2023-06-01-preview"
           ],
-          "default": "2022-12-01",
+          "default": "2023-05-15",
           "markdownDescription": "(Optional) Azure OpenAI Service REST API version."
         },
         "chatgpt-vscode.model": {
@@ -198,14 +198,14 @@
             "GPT-3.5 Turbo 16k (June 13)"
           ],
           "markdownEnumDescriptions": [
-            "8k GPT-4: More capable than any GPT-3.5 model, able to do more complex tasks, and optimized for chat. Will be updated with our latest model iteration 2 weeks after it is released.",
-            "8k Snapshot of `gpt-4` from June 13th 2023 with function calling data. Unlike `gpt-4`, this model will not receive updates, and will be deprecated 3 months after a new version is released.",
-            "32k Snapshot of `gpt-4-32` from June 13th 2023. Unlike `gpt-4-32k`, this model will not receive updates, and will be deprecated 3 months after a new version is released.",
-            "4k GPT-3.5 Turbo: Most capable GPT-3.5 model and optimized for chat at 1/10th the cost of `text-davinci-003`. Will be updated with our latest model iteration 2 weeks after it is released.",
+            "8k GPT-4: More capable than any GPT-3.5 model, able to do more complex tasks.",
+            "8k Snapshot of `gpt-4` from June 13th 2023 with function calling data.",
+            "32k Snapshot of `gpt-4-32` from June 13th 2023.",
+            "4k GPT-3.5 Turbo: Most capable GPT-3.5 model and optimized for chat at 1/10th the cost of `text-davinci-003`.",
             "4k Snapshot of `gpt-3.5-turbo` from March 1st.",
-            "4k Snapshot of `gpt-3.5-turbo` from June 13th 2023 with function calling data. Unlike `gpt-3.5-turbo`, this model will not receive updates, and will be deprecated 3 months after a new version is released.",
+            "4k Snapshot of `gpt-3.5-turbo` from June 13th 2023 with function calling data.",
             "16k version of `gpt-3.5-turbo` with 4 times the context.",
-            "16k Snapshot of `gpt-3.5-turbo-16k` from June 13th 2023. Unlike `gpt-3.5-turbo-16k`, this model will not receive updates, and will be deprecated 3 months after a new version is released."
+            "16k Snapshot of `gpt-3.5-turbo-16k` from June 13th 2023."
           ]
         },
         "chatgpt-vscode.promptPrefix.refactorCode": {
@@ -220,7 +220,7 @@
         },
         "chatgpt-vscode.promptPrefix.findProblems": {
           "type": "string",
-          "default": "Identify any current or potential future issues in this code, regardless of whether they are immediately apparent.",
+          "default": "Identify any current or potential future issues in this code.",
           "description": "Find problems prompt."
         },
         "chatgpt-vscode.promptPrefix.enableFindProblems": {
@@ -230,7 +230,7 @@
         },
         "chatgpt-vscode.promptPrefix.optimize": {
           "type": "string",
-          "default": "Optimize this code using latest techniques: ",
+          "default": "Suggest optimizations for the following code.",
           "description": "Optimize code prompt."
         },
         "chatgpt-vscode.promptPrefix.enableOptimize": {
@@ -240,7 +240,7 @@
         },
         "chatgpt-vscode.promptPrefix.explain": {
           "type": "string",
-          "default": "Explain this code as if you were an expert university computer science professor.",
+          "default": "Explain the following code.",
           "description": "Explain code prompt."
         },
         "chatgpt-vscode.promptPrefix.enableExplain": {
@@ -250,7 +250,7 @@
         },
         "chatgpt-vscode.promptPrefix.addComments": {
           "type": "string",
-          "default": "Add detailed comments to each block of logic within this code: ",
+          "default": "Add detailed comments to each block of logic within this code.",
           "description": "Add comments prompt."
         },
         "chatgpt-vscode.promptPrefix.enableAddComments": {
@@ -260,7 +260,7 @@
         },
         "chatgpt-vscode.promptPrefix.completeCode": {
           "type": "string",
-          "default": "Please complete the following code: ",
+          "default": "Complete the following code.",
           "description": "Complete code prompt."
         },
         "chatgpt-vscode.promptPrefix.enableCompleteCode": {
@@ -275,14 +275,13 @@
         },
         "chatgpt-vscode.temperature": {
           "type": "number",
-          "default": 0.2,
-          "markdownDescription": "Sets the sampling 'temperature'. Higher values result in riskier outputs, making the model more creative. A value of 0.9 is suggested for creative applications, while 0 is for tasks with a well-defined answer. It's advisable to adjust either this or `top_p`, not both. More info in the [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-temperature)."
+          "default": 0.1,
+          "markdownDescription": "Sets the sampling 'temperature'. Higher values result in riskier outputs, making the model more creative. A value of 0.9 is suggested for creative applications, while 0.1 is for tasks with a well-defined answer."
         },
         "chatgpt-vscode.top_p": {
-          "title": "Nucleus sampling (top_p)",
           "type": "number",
           "default": 0,
-          "markdownDescription": "Defines 'nucleus sampling', an alternative to temperature sampling. The model will consider tokens within the top `top_p` probability mass. For instance, 0.1 would consider the top 10% probability tokens. It's advisable to adjust either this or `temperature`, not both."
+          "markdownDescription": "Defines 'nucleus sampling', an alternative to temperature sampling. The model will consider tokens within the top `top_p` probability mass. For instance, 0.1 would consider the top 10% probability tokens."
         },
         "chatgpt-vscode.systemPrompt": {
           "type": "string",
