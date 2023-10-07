@@ -195,7 +195,7 @@ export class GPTRequestManager {
                     break;
                 }
 
-                if (part.choices.len === 0) {
+                if (!part.choices || part.choices.length === 0) {
                     throw new Error("OpenAI API returned invalid data");
                 }
 
