@@ -82,6 +82,10 @@ export function registerFunction(func: (args: object) => string, name: string, p
     return provider.functionRegistry.registerFunction(func, name, parameters, description, statusMessage);
 }
 
+export function removeFunction(name: string) {
+    return provider.functionRegistry.removeFunction(name);
+}
+
 export function addSystemMessageMixin(key: string, content: string) {
     provider.systemMessageFactory.addMixin(key, content);
 }
