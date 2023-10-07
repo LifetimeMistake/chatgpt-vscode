@@ -101,3 +101,7 @@ export function offUserRequest(handler: (message: UserMessage) => void) {
 export function onMessageHistoryCleared(handler: () => void) {
     provider.messageHistory.onClearMessages(handler);
 }
+
+export function offMessageHistoryCleared(handler: () => void) {
+    provider.messageHistory.offClearMessages(handler);
+}
