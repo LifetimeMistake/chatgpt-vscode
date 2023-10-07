@@ -22,10 +22,13 @@ export async function activate(context: vscode.ExtensionContext) {
         if (setting.startsWith("promptPrefix.")) {
             setting = setting.replace("promptPrefix.", "");
 
-            vscode.commands.executeCommand('setContext', `${setting}-enabled`, Settings.settings[SettingName[name]]);
-            Settings.onSettingChanged(SettingName[name], () => {
-                vscode.commands.executeCommand('setContext', `${setting}-enabled`, Settings.settings[SettingName[name]]);
-            });
+            vscode.commands.executeCommand('setContext', `${setting}-enabled`, true);
+            if (setting !== "customPrompt") {
+                Settings.onSettingChanged(SettingName[name], () => {
+                    const isValid = (Settings.settings[SettingName[name]] as string).trim().length !== 0;
+                    vscode.commands.executeCommand('setContext', `${setting}-enabled`, isValid);
+                });
+            }
 
             registerCommand(setting, () => {
                 const editor = vscode.window.activeTextEditor;
