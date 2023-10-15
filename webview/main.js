@@ -28,6 +28,7 @@ const ASSISTANT_ERROR_RESPONSE = 'assistantErrorResponse';
 const CHANGE_NAME_RESPONSE = 'changeNameResponse';
 
 var assistantName = "GPT";
+var currentPromptId = "";
 
 class ExtensionMessenger {
     static sendMessage(type, data) {
@@ -65,6 +66,7 @@ ExtensionMessenger.addMessageHandler(ASSISTANT_CALL_RESPONSE, (data) => {
 });
 
 ExtensionMessenger.addMessageHandler(ASSISTANT_ERROR_RESPONSE, (data) => {
+    ChatManager.readyAssistantPrompt(currentPromptId);
     ChatManager.createErrorPrompt(data);
 });
 
@@ -87,6 +89,11 @@ class ChatManager {
             chatElement.classList.toggle("hidden");
             introElement.classList.toggle("hidden");
         }
+
+        let markedContent = marked.parse(content);
+        const parser = new DOMParser();
+        const htmlDoc = parser.parseFromString(markedContent, 'text/html');
+        const updatedMarkedContent = htmlDoc.documentElement.innerHTML;
 
         var isScrolledMax = this.isScrolledMax();
         const promptElement = document.createElement('div');
@@ -119,11 +126,11 @@ class ChatManager {
                         <span class="">Cancel</span></button>
                 </div>
                 <textarea id="editArea-${id}" class="bg-neutral-800 overflow-y-auto resize-none p-3 w-full mt-3 hidden"></textarea>
-                <p id="prompt-${id}" class="break-words text-start">${content}</p>`;
+                <div class="user-prompt" id="prompt-${id}" class="break-words text-start">${updatedMarkedContent}</div>`;
         document.getElementById('chat').appendChild(promptElement);
         this.prompts.push({ id: id, type: chatEnum.user, content: content });
 
-        this.toggleState();
+        this.setStateWaiting();
 
         document.getElementById(`editPrompt-${id}`).addEventListener("click", () => {
             this.editPrompt(id);
@@ -142,6 +149,7 @@ class ChatManager {
     }
 
     static createAssistantPrompt(id) {
+        currentPromptId = id;
         var isScrolledMax = this.isScrolledMax();
         const callElement = document.getElementById('functionCall');
         if (callElement) { callElement.remove(); }
@@ -193,7 +201,6 @@ class ChatManager {
                 </div>
                 <div class="assistant-prompt break-words text-start relative text-base text-red-800">${error}</div>`;
         document.getElementById('chat').appendChild(promptElement);
-        this.toggleState();
         if (isScrolledMax) {
             document.getElementById('main-panel').scrollTop += 9999;
         }
@@ -212,7 +219,7 @@ class ChatManager {
 
         var editArea = document.getElementById(`editArea-${id}`);
         editArea.classList.remove("hidden");
-        editArea.value = promptElement.innerHTML;
+        editArea.value = promptElement.textContent.trim();
     }
 
     static confirmEdit(id) {
@@ -225,9 +232,14 @@ class ChatManager {
         editArea.classList.add("hidden");
         document.getElementById(`editOptions-${id}`).classList.add("hidden");
 
+        let markedContent = marked.parse(editArea.value);
+        const parser = new DOMParser();
+        const htmlDoc = parser.parseFromString(markedContent, 'text/html');
+        const updatedMarkedContent = htmlDoc.documentElement.innerHTML;
+
         var promptElement = document.getElementById(`prompt-${id}`);
         promptElement.classList.remove("hidden");
-        promptElement.innerHTML = editArea.value;
+        promptElement.innerHTML = updatedMarkedContent;
 
         var prompt = this.prompts.find(p => p.id === id);
         prompt.content = editArea.value;
@@ -243,8 +255,9 @@ class ChatManager {
         }
 
         this.isEditingPrompt = false;
-        this.toggleState();
+        this.setStateWaiting();
         ExtensionMessenger.sendMessage(USER_EDIT_REQUEST, { id: id, content: editArea.value });
+        editArea.value = "";
     }
 
     static cancelEdit(id) {
@@ -319,17 +332,23 @@ class ChatManager {
     }
 
     static readyAssistantPrompt(id) {
+        if (!document.getElementById(`prompt-${id}`)) {
+            this.setStateReady();
+            return;
+        }
+
         var isScrolledMax = this.isScrolledMax();
         var codeBlocks = document.getElementById(`prompt-${id}`).getElementsByTagName("pre");
 
         for (var i = 0; i < codeBlocks.length; i++) {
+            console.log("found codeblock");
             var codeBlock = codeBlocks[i];
             var preWrap = document.createElement('div');
 
             // Insert preWrap before codeBlock
             codeBlock.parentNode.insertBefore(preWrap, codeBlock);
 
-            preWrap.classList.add("mb-5");
+            preWrap.classList.add("mb-5", "preWrap");
             preWrap.innerHTML = `<div class="bg-neutral-800 p-1 h-8 flex flex-row justify-end">
                         <button id="copy-${id}" class="hover:bg-neutral-500 w-6 h-6 text-center rounded-md"><span
                                 class="material-symbols-outlined text-lg text-center w-6 h-6 align-middle">
@@ -343,9 +362,10 @@ class ChatManager {
                 var codeContent = codeBlock.textContent;
                 navigator.clipboard.writeText(codeContent);
             });
+            currentPromptId = "";
         }
 
-        this.toggleState();
+        this.setStateReady();
         if (isScrolledMax) {
             document.getElementById('main-panel').scrollTop += 9999;
         }
@@ -362,10 +382,16 @@ class ChatManager {
         mainPanel.scrollTop = mainPanel.scrollHeight;
     }
 
-    static toggleState() {
-        this.waitingForAssistant = !this.waitingForAssistant;
-        document.getElementById('thinking').classList.toggle("hidden");
-        document.getElementById('stopButton').classList.toggle("hidden");
+    static setStateWaiting() {
+        this.waitingForAssistant = true;
+        document.getElementById('thinking').classList.remove("hidden");
+        document.getElementById('stopButton').classList.remove("hidden");
+    }
+
+    static setStateReady() {
+        this.waitingForAssistant = false;
+        document.getElementById('thinking').classList.add("hidden");
+        document.getElementById('stopButton').classList.add("hidden");
     }
 
     static changeName(name) {
@@ -447,7 +473,6 @@ document.getElementById('stopButton').addEventListener('click', () => {
         ExtensionMessenger.sendMessage(USER_ABORT_REQUEST);
     }
 });
-
 document.addEventListener('mouseup', (e) => {
     const optionsList = document.querySelector("#options-list");
     const optionsButton = document.querySelector("#options-button");
