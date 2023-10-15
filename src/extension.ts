@@ -43,7 +43,7 @@ function offMessageHistoryCleared(handler: () => void) {
 
 export async function activate(context: vscode.ExtensionContext) {
     provider = new ChatViewProvider(context);
-    const view = vscode.window.registerWebviewViewProvider(
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(
         "chatgpt-vscode.view",
         provider,
         {
@@ -51,7 +51,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 retainContextWhenHidden: true,
             },
         }
-    );
+    ));
 
     Object.keys(SettingName).forEach((name) => {
         var setting = SettingName[name];
@@ -66,7 +66,16 @@ export async function activate(context: vscode.ExtensionContext) {
                 });
             }
 
-            registerCommand(setting, () => {
+            registerCommand(setting, async () => {
+                vscode.commands.executeCommand('chatgpt-vscode.view.focus');
+                if (!provider.webviewView) {
+                    await new Promise<void>((resolve) => {
+                        provider.onWebviewLoaded(() => {
+                            resolve();
+                        });
+                    });
+                }
+
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
                     vscode.window.showErrorMessage("You need to be editing a file to use this command!");
@@ -91,19 +100,16 @@ export async function activate(context: vscode.ExtensionContext) {
                     var inputOptions: vscode.InputBoxOptions = {};
                     inputOptions.placeHolder = "Input your custom prompt here";
                     inputOptions.title = "The custom prompt will be sent to the assistant with your code selection";
-                    vscode.window.showInputBox(inputOptions).then((value) => {
-                        if (value === undefined || value.length === 0) {
-                            return;
-                        }
-                        prefix = value;
-                        sendUserPrompt(prefix, null, selection);
-                    });
+                    var value = await vscode.window.showInputBox(inputOptions);
+                    if (value === undefined || value.length === 0) {
+                        return;
+                    }
+                    prefix = value;
+                    sendUserPrompt(prefix, null, selection);
                 }
             });
         }
     });
-
-
 
     function registerCommand(name: string, handler: () => void) {
         context.subscriptions.push(vscode.commands.registerCommand(`chatgpt-vscode.${name}`, handler));

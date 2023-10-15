@@ -25,6 +25,7 @@ const CALL_STARTED_EVENT = 'callReceivedEvent';
 const MESSAGE_STOP_EVENT = 'messageStopEvent';
 const ERROR_STOP_EVENT = 'errorStopEvent';
 const USER_PROMPT_EVENT = 'userPromptEvent';
+const WEBVIEW_LOADED_EVENT = 'webviewLoadedEvent';
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
     public webviewView?: vscode.WebviewView;
@@ -34,12 +35,18 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     public extensionMessenger?: ExtensionMessenger;
     public functionRegistry?: FunctionRegistry;
     public messageHistory?: MessageHistory;
+    private eventEmitter: EventEmitter;
 
     private settings: Settings;
+
+    onWebviewLoaded(handler: () => void) {
+        this.eventEmitter.on(WEBVIEW_LOADED_EVENT, handler);
+    }
 
     constructor(context: vscode.ExtensionContext) {
         this.extensionContext = context;
         this.settings = new Settings();
+        this.eventEmitter = new EventEmitter();
     }
 
     public resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext<unknown>, token: vscode.CancellationToken): void | Thenable<void> {
@@ -73,6 +80,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         webview.options = {
             enableScripts: true,
         };
+
         var mainJS = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionContext.extensionUri, 'webview', 'main.js'));
         var hljsCSS = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionContext.extensionUri, 'webview', 'hljs.css'));
         var tailwindCSS = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionContext.extensionUri, 'webview', 'tailwind.css'));
@@ -116,7 +124,17 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         });
 
         this.extensionMessenger.addMesageListener(USER_PROMPT_REQUEST, (data) => {
-            this.gptTransactionHandler.sendUserPrompt(data);
+            var includeCode: boolean = data.includeCode;
+
+            var code: string = null;
+            if (includeCode) {
+                const editor = vscode.window.activeTextEditor;
+                if (editor) {
+                    code = editor.document.getText(editor.selection);
+                }
+            }
+
+            this.gptTransactionHandler.sendUserPrompt(data.content, null, code);
         });
 
         this.extensionMessenger.addMesageListener(USER_EDIT_REQUEST, (data) => {
@@ -135,6 +153,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         this.extensionMessenger.addMesageListener(USER_ABORT_REQUEST, () => {
             this.gptTransactionHandler.abortRequest();
         });
+
+        this.eventEmitter.emit(WEBVIEW_LOADED_EVENT);
     }
 }
 

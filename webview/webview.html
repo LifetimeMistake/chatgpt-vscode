@@ -41,8 +41,16 @@
                 margin-bottom: 1.25rem;
             }
 
-            ul {
+            ul:not(#options-list) {
                 margin-bottom: 1.25rem;
+                margin-left: 0.5rem;
+                list-style-type: "- "
+            }
+
+            ol {
+                margin-bottom: 1.25rem;
+                margin-left: 1.25rem;
+                list-style-type: decimal;
             }
 
             li {
@@ -80,7 +88,7 @@
             class="bg-neutral-700 placeholder:text-neutral-400 text-sm overflow-y-auto resize-none p-2 flex-grow"
             placeholder="Ask a question..."></textarea>
         <div class="flex px-1 justify-center relative">
-            <ul id="options-list" class="absolute bg-neutral-600 -top-20 -right-9 w-max shadow-xl hidden">
+            <ul id="options-list" class="absolute bg-neutral-600 -top-32 -right-9 w-max shadow-xl hidden">
                 <li>
                     <button id="newchat-button"
                         class="hover:bg-neutral-500 p-2 w-full flex flex-row justify-between items-center">
@@ -101,6 +109,13 @@
                             Open settings
                         </span>
                     </button>
+                </li>
+                <li>
+                    <div id="code-checkbox-button"
+                        class="hover:bg-neutral-500 p-2 w-full flex flex-row justify-between items-center">
+                        <input type="checkbox" id="code-checkbox" class="hover:cursor-pointer w-4 h-4">
+                        <span class="text-center align-middle">Include code</span>
+                    </div>
                 </li>
             </ul>
             <button id="options-button" class="mx-auto my-auto group">

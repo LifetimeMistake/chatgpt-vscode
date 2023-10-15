@@ -423,7 +423,8 @@ function sendPrompt() {
         return;
     }
 
-    ExtensionMessenger.sendMessage(USER_PROMPT_REQUEST, inputArea.value);
+    var includeCode = document.getElementById('code-checkbox').checked;
+    ExtensionMessenger.sendMessage(USER_PROMPT_REQUEST, { content: inputArea.value, includeCode: includeCode });
     document.getElementById('chat').classList.remove('hidden');
     document.getElementById('introduction').classList.add('hidden');
     inputArea.value = "";
