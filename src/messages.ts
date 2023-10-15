@@ -40,20 +40,19 @@ export class UserMessage implements Message {
     }
 
     toObject(): object {
-        var content = this.content;
-        var codeMessage = `${this.code}\n\n` || "";
-        var mergedSystemMessages;
+        var content: string[] = [];
         if (this.systemMessages.length !== 0) {
-            mergedSystemMessages = this.systemMessages.map(message => `#SYSTEM: ${message}\n`).join("");
-        } else {
-            mergedSystemMessages = "";
+            content.push(`${this.systemMessages.map(message => `#SYSTEM: ${message}`).join("\n")}\n#SYSTEM: User query below`);
         }
 
-        content = `${mergedSystemMessages}#SYSTEM: User query below\n\n${this.content}\n\n${codeMessage}`;
+        content.push(this.content);
+        if (this.code) {
+            content.push("```\n" + this.code + "\n```");
+        }
 
         var message = {};
         message["role"] = "user";
-        message["content"] = content;
+        message["content"] = content.join("\n\n");
 
         return message;
     }
