@@ -3,7 +3,7 @@ import { EventEmitter } from "stream";
 import { v4 as uuid } from "uuid";
 import * as vscode from 'vscode';
 import { AuthenticationMethod, AzureAuthentication, ErrorStop, FunctionCallStop, GPTRequestManager, MessageStop, OpenAIAuthentication, OpenAIRequest } from "./api";
-import { FunctionRegistry, ParameterType, PropertyInfo } from "./functions";
+import { FunctionRegistry } from "./functions";
 import { MessageHistory, SystemMessageFactory } from "./history";
 
 const USER_PROMPT_REQUEST = 'userPromptRequest';
@@ -135,18 +135,6 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         this.extensionMessenger.addMesageListener(USER_ABORT_REQUEST, () => {
             this.gptTransactionHandler.abortRequest();
         });
-
-        var property = new PropertyInfo("property", ParameterType.string, true, "The name of the property", ["maxLogs", "logLevel", "isMain"]);
-        this.functionRegistry.registerFunction((args) => {
-            switch (args["property"]) {
-                case "maxLogs":
-                    return "10";
-                case "logLevel":
-                    return "DEBUG";
-                case "isMain":
-                    return "true";
-            }
-        }, "getMainClassProperty", [property], "Get the value of a property in the main class", "Getting main class property...");
     }
 }
 

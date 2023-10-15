@@ -14,6 +14,14 @@ export class FunctionRegistry {
         this.functions.set(name, functionInfo);
     }
 
+    public removeFunction(name: string) {
+        if (!this.functions.has(name)) {
+            return;
+        }
+
+        this.functions.set(name, null);
+    }
+
     public getFunctions(): FunctionInfo[] {
         return Array.from(this.functions.values());
     }

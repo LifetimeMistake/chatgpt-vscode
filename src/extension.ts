@@ -5,6 +5,42 @@ import { ChatViewProvider, SettingName, Settings } from "./view";
 
 var provider: ChatViewProvider;
 
+function sendUserPrompt(content: string, systemMessages?: string[], code?: string) {
+    provider.gptTransactionHandler.sendUserPrompt(content, systemMessages, code);
+}
+
+function registerFunction(func: (args: object) => string, name: string, parameters: PropertyInfo[], description?: string, statusMessage?: string) {
+    return provider.functionRegistry.registerFunction(func, name, parameters, description, statusMessage);
+}
+
+function removeFunction(name: string) {
+    return provider.functionRegistry.removeFunction(name);
+}
+
+function addSystemMessageMixin(key: string, content: string) {
+    provider.systemMessageFactory.addMixin(key, content);
+}
+
+function removeSystemMessageMixin(key: string) {
+    provider.systemMessageFactory.removeMixin(key);
+}
+
+function onUserRequest(handler: (message: UserMessage) => void) {
+    provider.messageHistory.onUserRequest(handler);
+}
+
+function offUserRequest(handler: (message: UserMessage) => void) {
+    provider.messageHistory.offUserRequest(handler);
+}
+
+function onMessageHistoryCleared(handler: () => void) {
+    provider.messageHistory.onClearMessages(handler);
+}
+
+function offMessageHistoryCleared(handler: () => void) {
+    provider.messageHistory.offClearMessages(handler);
+}
+
 export async function activate(context: vscode.ExtensionContext) {
     provider = new ChatViewProvider(context);
     const view = vscode.window.registerWebviewViewProvider(
@@ -22,10 +58,13 @@ export async function activate(context: vscode.ExtensionContext) {
         if (setting.startsWith("promptPrefix.")) {
             setting = setting.replace("promptPrefix.", "");
 
-            vscode.commands.executeCommand('setContext', `${setting}-enabled`, Settings.settings[SettingName[name]]);
-            Settings.onSettingChanged(SettingName[name], () => {
-                vscode.commands.executeCommand('setContext', `${setting}-enabled`, Settings.settings[SettingName[name]]);
-            });
+            vscode.commands.executeCommand('setContext', `${setting}-enabled`, true);
+            if (setting !== "customPrompt") {
+                Settings.onSettingChanged(SettingName[name], () => {
+                    const isValid = (Settings.settings[SettingName[name]] as string).trim().length !== 0;
+                    vscode.commands.executeCommand('setContext', `${setting}-enabled`, isValid);
+                });
+            }
 
             registerCommand(setting, () => {
                 const editor = vscode.window.activeTextEditor;
@@ -69,32 +108,16 @@ export async function activate(context: vscode.ExtensionContext) {
     function registerCommand(name: string, handler: () => void) {
         context.subscriptions.push(vscode.commands.registerCommand(`chatgpt-vscode.${name}`, handler));
     }
-}
 
-export function sendUserPrompt(content: string, systemMessages?: string[], code?: string) {
-    provider.gptTransactionHandler.sendUserPrompt(content, systemMessages, code);
-}
-
-export function registerFunction(func: (args: object) => string, name: string, parameters: PropertyInfo[], description?: string, statusMessage?: string) {
-    return provider.functionRegistry.registerFunction(func, name, parameters, description, statusMessage);
-}
-
-export function addSystemMessageMixin(key: string, content: string) {
-    provider.systemMessageFactory.addMixin(key, content);
-}
-
-export function removeSystemMessageMixin(key: string) {
-    provider.systemMessageFactory.removeMixin(key);
-}
-
-export function onUserRequest(handler: (message: UserMessage) => void) {
-    provider.messageHistory.onUserRequest(handler);
-}
-
-export function offUserRequest(handler: (message: UserMessage) => void) {
-    provider.messageHistory.offUserRequest(handler);
-}
-
-export function onMessageHistoryCleared(handler: () => void) {
-    provider.messageHistory.onClearMessages(handler);
+    return {
+        sendUserPrompt,
+        registerFunction,
+        removeFunction,
+        addSystemMessageMixin,
+        removeSystemMessageMixin,
+        onUserRequest,
+        offUserRequest,
+        onMessageHistoryCleared,
+        offMessageHistoryCleared
+    };
 }

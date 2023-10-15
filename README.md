@@ -1,14 +1,14 @@
-## Features
+# ChatGPT for VS Code
+An extension that integrates GPT models right into your code editor.
 
-Experience unparalleled autonomous coding with Autonimate, the exclusive Visual Studio Code Extension that revolutionizes your development process. Harness the power of AI to effortlessly generate code based on your queries. Simply state your desired outcome, click the red button, and watch Autonimate take care of the rest.
+Based on [Autonimate](https://github.com/Cytranics/autonimate-vscode-ext), but completely rewritten for code clarity and to integrate OpenAI's functions feature. 
 
-**Key Features:**
-- **Unprecedented Autonomous Coding**: Be amazed as Autonimate autonomously generates code based on your queries, making coding a breeze.
-- **Customizable System Prompt and System Append Prompt**: Personalize the AI's responses by customizing the initial prompt and the text appended to each API call.
-- **Wide Model Selection**: Choose from cutting-edge GPT-3.5 and GPT-4 models, including 18k and 32k token models, to tackle tasks of any complexity.
-- **Seamless Azure and OpenAI Integration**: Enjoy effortless integration with both Azure and OpenAI platforms, enhancing your coding experience.
-- **Built on the Success of ChatGPT**: Autonimate builds upon the beloved features of the retired ChatGPT extension, carrying its legacy forward.
+**Features**
+ - **Functions API**: Allows other extensions to provide functions for the GPT model to take advantage of. This could be used to enable codebase indexing or other automations.
+ - **Mixins and analyzers**: Allows other extensions to analyze user messages before they are sent and prefix them with system messages as well as modify the main system prompt with custom instructions. This can be used to instruct the model on the use of custom extension-defined features.
+ - **Quick access commands**: Pre-defined prompts for quick actions
+ - **Customizable system / command prompts**: You can customize each prompt in the extension settings.
+ - **Wide model selection**: Multiple variants of both GPT-3.5 and GPT-4 models are available.
+ - **OpenAI and Azure authentication**: You can choose the auth provider to use during your chat sessions.
 
-We value your feedback and suggestions as we continuously enhance this extension to provide the ultimate autonomous coding experience.
-
-Open Source - [Autonimate VS Code Ext](https://github.com/Cytranics/autonimate-vscode-ext)
+While this extension is unlikely to break as long as OpenAI doesn't go under the bus, it's unlikely that this extension will receive any updates other than minir bug fixes.

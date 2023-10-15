@@ -195,44 +195,44 @@ export class GPTRequestManager {
                     break;
                 }
 
-                if (part.choices.len === 0) {
+                if (!part.choices || part.choices.length === 0) {
                     throw new Error("OpenAI API returned invalid data");
                 }
 
                 const data = part.choices[0];
-                if (data.finish_reason === "stop") {
-                    // Reached stop
-                    return new MessageStop(this.content);
+                switch (data.finish_reason) {
+                    case "stop":
+                        // Reached stop
+                        return new MessageStop(this.content);
+                    case "content_filter":
+                        throw new Error("Content filter has flagged the AI response");
+                    case "function_call":
+                        // Reached end of function call stream
+                        if (!this._callInProgress) {
+                            throw new Error("Function call stop reached but no function call stream was in progress");
+                        }
+                        return new FunctionCallStop(this._functionName, this._functionBuffer.join(""));
                 }
-                else if (data.finish_reason === "function_call") {
-                    // Reached end of function call stream
+
+                // Regular update
+                const content = data.delta.content;
+                const func = data.delta.function_call;
+
+                if (content) {
+                    // Receive content delta
+                    this._contentBuffer.push(content);
+                    this._eventEmitter.emit(CONTENT_RECEIVED_EVENT, content);
+                } else if (func) {
                     if (!this._callInProgress) {
-                        throw new Error("Function call stop reached but no function call stream was in progress");
+                        // Receive function header
+                        this._functionName = func.name;
+                        this._callInProgress = true;
+                        this._eventEmitter.emit(FUNCTION_CALL_STARTED_EVENT, func.name);
                     }
 
-                    return new FunctionCallStop(this._functionName, this._functionBuffer.join(""));
-                }
-                else if (data.finish_reason === null) {
-                    // Regular update
-                    const content = data.delta.content;
-                    const func = data.delta.function_call;
-
-                    if (content) {
-                        // Receive content delta
-                        this._contentBuffer.push(content);
-                        this._eventEmitter.emit(CONTENT_RECEIVED_EVENT, content);
-                    } else if (func) {
-                        if (!this._callInProgress) {
-                            // Receive function header
-                            this._functionName = func.name;
-                            this._callInProgress = true;
-                            this._eventEmitter.emit(FUNCTION_CALL_STARTED_EVENT, func.name);
-                        }
-
-                        if (func.arguments) {
-                            // Receive function param delta
-                            this._functionBuffer.push(func.arguments);
-                        }
+                    if (func.arguments) {
+                        // Receive function param delta
+                        this._functionBuffer.push(func.arguments);
                     }
                 }
             }
