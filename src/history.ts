@@ -24,11 +24,13 @@ export class MessageHistory {
         return message;
     }
 
-    public editUserMessage(id: string, newContent: string) {
+    public editUserMessage(id: string, content: string) {
         var messageIndex = this.messages.findIndex(m => m.id === id && m instanceof UserMessage);
         if (messageIndex === -1) { throw new Error("Invalid message id!"); }
         var message = this.messages[messageIndex] as UserMessage;
-        message.content = newContent;
+        message.content = content;
+        message.systemMessages = [];
+        this.eventEmitter.emit(USER_REQUEST_EVENT, message);
         this.messages.splice(messageIndex + 1);
     }
 
