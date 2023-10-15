@@ -44,12 +44,12 @@ export class UserMessage implements Message {
         var codeMessage = `${this.code}\n\n` || "";
         var mergedSystemMessages;
         if (this.systemMessages.length !== 0) {
-            mergedSystemMessages = this.systemMessages.map(message => `#SYSTEM ${message}\n`).join("");
+            mergedSystemMessages = this.systemMessages.map(message => `#SYSTEM: ${message}\n`).join("");
         } else {
             mergedSystemMessages = "";
         }
 
-        content = `${mergedSystemMessages}#SYSTEM User query below\n\n${this.content}\n\n${codeMessage}`;
+        content = `${mergedSystemMessages}#SYSTEM: User query below\n\n${this.content}\n\n${codeMessage}`;
 
         var message = {};
         message["role"] = "user";

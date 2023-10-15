@@ -41,6 +41,18 @@ function offMessageHistoryCleared(handler: () => void) {
     provider.messageHistory.offClearMessages(handler);
 }
 
+function onWebviewLoaded(handler: () => void) {
+    provider.onWebviewLoaded(handler);
+}
+
+function offWebviewLoaded(handler: () => void) {
+    provider.offWebviewLoaded(handler);
+}
+
+function isWebviewLoaded(): boolean {
+    return provider.isLoaded;
+}
+
 export async function activate(context: vscode.ExtensionContext) {
     provider = new ChatViewProvider(context);
     const view = vscode.window.registerWebviewViewProvider(
@@ -118,6 +130,9 @@ export async function activate(context: vscode.ExtensionContext) {
         onUserRequest,
         offUserRequest,
         onMessageHistoryCleared,
-        offMessageHistoryCleared
+        offMessageHistoryCleared,
+        onWebviewLoaded,
+        offWebviewLoaded,
+        isWebviewLoaded
     };
 }

@@ -6,6 +6,7 @@ import { AuthenticationMethod, AzureAuthentication, ErrorStop, FunctionCallStop,
 import { FunctionRegistry } from "./functions";
 import { MessageHistory, SystemMessageFactory } from "./history";
 
+const ON_LOAD_EVENT = "onLoaded";
 const USER_PROMPT_REQUEST = 'userPromptRequest';
 const USER_EDIT_REQUEST = 'userEditRequest';
 const OPEN_SETTINGS_REQUEST = 'openSettingsRequest';
@@ -28,18 +29,29 @@ const USER_PROMPT_EVENT = 'userPromptEvent';
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
     public webviewView?: vscode.WebviewView;
+    private onLoadEventEmitter: EventEmitter;
     private extensionContext: vscode.ExtensionContext;
     public gptTransactionHandler?: GPTTransactionHandler;
     public systemMessageFactory?: SystemMessageFactory;
     public extensionMessenger?: ExtensionMessenger;
     public functionRegistry?: FunctionRegistry;
     public messageHistory?: MessageHistory;
+    public isLoaded: boolean;
 
     private settings: Settings;
 
     constructor(context: vscode.ExtensionContext) {
         this.extensionContext = context;
+        this.onLoadEventEmitter = new EventEmitter();
         this.settings = new Settings();
+    }
+
+    public onWebviewLoaded(handler: () => void) {
+        this.onLoadEventEmitter.on(ON_LOAD_EVENT, handler);
+    }
+
+    public offWebviewLoaded(handler: () => void) {
+        this.onLoadEventEmitter.off(ON_LOAD_EVENT, handler);
     }
 
     public resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext<unknown>, token: vscode.CancellationToken): void | Thenable<void> {
@@ -135,6 +147,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         this.extensionMessenger.addMesageListener(USER_ABORT_REQUEST, () => {
             this.gptTransactionHandler.abortRequest();
         });
+
+        this.isLoaded = true;
+        this.onLoadEventEmitter.emit(ON_LOAD_EVENT);
     }
 }
 
