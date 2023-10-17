@@ -61,6 +61,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
         var useSystemRole: boolean = Settings.settings[SettingName.model].startsWith('gpt-4');
         let assistantName = Settings.settings[SettingName.assistantName];
+
         var systemPrompt = Settings.settings[SettingName.systemPrompt].replace('{name}', assistantName);
         if (systemPrompt.length === 0) {
             systemPrompt = null;
@@ -77,8 +78,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         });
 
         this.messageHistory = new MessageHistory(Settings.settings[SettingName.maxHistoryMessages], this.systemMessageFactory);
-        Settings.onSettingChanged(SettingName.systemPrompt, () => {
+        Settings.onSettingChanged(SettingName.maxHistoryMessages, () => {
             this.messageHistory.maxMessages = Settings.settings[SettingName.maxHistoryMessages];
+            console.log(`maxHistoryMessages = ${this.messageHistory.maxMessages}`);
         });
 
         this.webviewView = webviewView;
@@ -159,6 +161,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         this.extensionMessenger.addMesageListener(USER_ABORT_REQUEST, () => {
             this.gptTransactionHandler.abortRequest();
         });
+
+        this.extensionMessenger.sendMessage(CHANGE_NAME_RESPONSE, assistantName);
 
         this.isLoaded = true;
         this.onLoadEventEmitter.emit(ON_LOAD_EVENT);
