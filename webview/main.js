@@ -29,6 +29,7 @@ const CHANGE_NAME_RESPONSE = 'changeNameResponse';
 
 var assistantName = "GPT";
 var currentPromptId = "";
+var includeCode = false;
 
 class ExtensionMessenger {
     static sendMessage(type, data) {
@@ -104,7 +105,7 @@ class ChatManager {
                     <span class="material-symbols-outlined w-8 h-8 pt-0.5 text-center align-middle">
                     person
                     </span>
-                    <h2 class="assistant-name text-lg font-semibold">You</h2>
+                    <h2 class="text-lg font-semibold">You</h2>
                     </div>
                     <div>
                         <button id="editPrompt-${id}" class="w-6"><span
@@ -272,9 +273,6 @@ class ChatManager {
 
     static appendToken(id, token) {
         var isScrolledMax = this.isScrolledMax();
-        if (this.isCallingFunction) {
-            document.getElementById('thinking').innerHTML = `Thinking . . .`;
-        }
 
         var prompt = this.prompts.find(m => m.id === id);
         if (!prompt) {
@@ -371,7 +369,6 @@ class ChatManager {
         }
     }
 
-
     static clearMessages() {
         this.prompts = [];
         document.getElementById('chat').innerHTML = '';
@@ -384,13 +381,13 @@ class ChatManager {
 
     static setStateWaiting() {
         this.waitingForAssistant = true;
-        document.getElementById('thinking').classList.remove("hidden");
+        document.getElementById('thinking').classList.replace("opacity-0", "opacity-1");
         document.getElementById('stopButton').classList.remove("hidden");
     }
 
     static setStateReady() {
         this.waitingForAssistant = false;
-        document.getElementById('thinking').classList.add("hidden");
+        document.getElementById('thinking').classList.replace("opacity-1", "opacity-0");
         document.getElementById('stopButton').classList.add("hidden");
     }
 
@@ -400,6 +397,8 @@ class ChatManager {
         for (var i = 0; i < nameElements.length; i++) {
             nameElements[i].innerHTML = name;
         }
+
+        console.log("changed name");
     }
 
     static isScrolledMax() {
@@ -423,7 +422,6 @@ function sendPrompt() {
         return;
     }
 
-    var includeCode = document.getElementById('code-checkbox').checked;
     ExtensionMessenger.sendMessage(USER_PROMPT_REQUEST, { content: inputArea.value, includeCode: includeCode });
     document.getElementById('chat').classList.remove('hidden');
     document.getElementById('introduction').classList.add('hidden');
@@ -431,6 +429,19 @@ function sendPrompt() {
     ChatManager.scrollToBottom();
     inputPanel.style.height = initPanelHeight;
 }
+
+document.getElementById('code-checkbox-button').addEventListener('click', () => {
+    includeCode = !includeCode;
+    document.getElementById('code-checkbox').classList.toggle("hidden");
+
+    codeIncludedText = document.getElementById('code-included');
+    if (includeCode) {
+        codeIncludedText.classList.replace("opacity-0", "opacity-1");
+    } else {
+        codeIncludedText.classList.replace("opacity-1", "opacity-0");
+    }
+
+});
 
 document.getElementById('input-area').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {

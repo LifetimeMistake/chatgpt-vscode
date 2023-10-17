@@ -86,7 +86,11 @@
         <div id="chat" class="hidden">
         </div>
     </div>
-    <h2 id="thinking" class="text-sm p-2 w-screen bg-neutral-900 hidden">Thinking . . .</h2>
+    <div class="flex flex-row justify-between w-screen bg-neutral-900">
+        <h2 id="thinking" class="text-sm pt-1 pl-3 opacity-0">Thinking . . .</h2>
+        <h2 id="code-included" class="text-sm pt-1 pr-3 opacity-0">Editor selection will be included</h2>
+    </div>
+
     <div id="input-panel" class="bg-neutral-700 flex flex-row m-3 h-9 max-h-64 justify-center relative">
         <textarea id="input-area"
             class="bg-neutral-700 placeholder:text-neutral-400 text-sm overflow-y-auto resize-none p-2 flex-grow"
@@ -115,11 +119,15 @@
                     </button>
                 </li>
                 <li>
-                    <div id="code-checkbox-button"
+                    <button id="code-checkbox-button"
                         class="hover:bg-neutral-500 p-2 w-full flex flex-row justify-between items-center">
-                        <input type="checkbox" id="code-checkbox" class="hover:cursor-pointer w-4 h-4">
+                        <div class="bg-white w-5 h-5 ml-0.5 rounded-md flex flex-row items-center justify-center">
+                            <span id="code-checkbox" class="material-symbols-outlined text-black text-lg hidden">
+                                close
+                            </span>
+                        </div>
                         <span class="text-center align-middle">Include code</span>
-                    </div>
+                    </button>
                 </li>
             </ul>
             <button id="options-button" class="mx-auto my-auto group">
