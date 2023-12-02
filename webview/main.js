@@ -339,29 +339,31 @@ class ChatManager {
         var codeBlocks = document.getElementById(`prompt-${id}`).getElementsByTagName("pre");
 
         for (var i = 0; i < codeBlocks.length; i++) {
-            console.log("found codeblock");
             var codeBlock = codeBlocks[i];
             var preWrap = document.createElement('div');
 
-            // Insert preWrap before codeBlock
             codeBlock.parentNode.insertBefore(preWrap, codeBlock);
 
             preWrap.classList.add("mb-5", "preWrap");
             preWrap.innerHTML = `<div class="bg-neutral-800 p-1 h-8 flex flex-row justify-end">
-                        <button id="copy-${id}" class="hover:bg-neutral-500 w-6 h-6 text-center rounded-md"><span
-                                class="material-symbols-outlined text-lg text-center w-6 h-6 align-middle">
-                                content_copy
-                            </span></button>
-                    </div>`;
+                <button id="copy-${i}-${id}" class="hover:bg-neutral-500 w-6 h-6 text-center rounded-md"><span
+                        class="material-symbols-outlined text-lg text-center w-6 h-6 align-middle">
+                        content_copy
+                    </span></button>
+            </div>`;
             codeBlock.parentElement.removeChild(codeBlock);
             preWrap.appendChild(codeBlock);
 
-            document.getElementById(`copy-${id}`).addEventListener("click", () => {
-                var codeContent = codeBlock.textContent;
-                navigator.clipboard.writeText(codeContent);
-            });
-            currentPromptId = "";
+            function createEventListener(codeBlock) {
+                document.getElementById(`copy-${i}-${id}`).addEventListener("click", () => {
+                    var codeContent = codeBlock.textContent;
+                    navigator.clipboard.writeText(codeContent);
+                });
+            }
+            createEventListener(codeBlock);
+            currentPromptId = '';
         }
+
 
         this.setStateReady();
         if (isScrolledMax) {
