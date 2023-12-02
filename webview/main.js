@@ -220,7 +220,11 @@ class ChatManager {
 
         var editArea = document.getElementById(`editArea-${id}`);
         editArea.classList.remove("hidden");
-        editArea.value = promptElement.textContent.trim();
+
+        var prompt = ChatManager.prompts.find((prompt) => { return prompt.id === id; });
+        console.log(prompt.content);
+
+        editArea.value = prompt.content;
     }
 
     static confirmEdit(id) {
