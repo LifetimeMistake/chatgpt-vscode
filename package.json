@@ -176,6 +176,7 @@
         "chatgpt-vscode.model": {
           "type": "string",
           "enum": [
+            "gpt-4-1106-preview",
             "gpt-4",
             "gpt-4-0613",
             "gpt-4-32k-0613",
@@ -188,7 +189,7 @@
           "default": "gpt-3.5-turbo",
           "markdownDescription": "OpenAI language model",
           "enumItemLabels": [
-            "GPT-4",
+            "GPT-4 Turbo 128K",
             "GPT-4 (June 13)",
             "GPT-4 32K (June 13)",
             "GPT-3.5 Turbo",
